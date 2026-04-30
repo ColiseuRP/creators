@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f3ede3;
+  --foreground: #14212b;
+  --surface: #fffaf2;
+  --surface-strong: #fffef9;
+  --muted: #66707a;
+  --accent: #12917d;
+  --accent-strong: #0b6658;
+  --sunset: #be6a24;
+  --line: rgba(19, 32, 45, 0.1);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-manrope);
+  --font-display: var(--font-space-grotesk);
+}
+
+* {
+  border-color: var(--line);
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  background-image:
+    radial-gradient(circle at top left, rgba(18, 145, 125, 0.18), transparent 28%),
+    radial-gradient(circle at bottom right, rgba(190, 106, 36, 0.18), transparent 25%),
+    linear-gradient(180deg, rgba(255, 250, 242, 0.9), rgba(243, 237, 227, 0.98)),
+    linear-gradient(rgba(20, 33, 43, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(20, 33, 43, 0.03) 1px, transparent 1px);
+  background-size:
+    auto,
+    auto,
+    auto,
+    32px 32px,
+    32px 32px;
+  background-position:
+    0 0,
+    100% 100%,
+    0 0,
+    center,
+    center;
+}
+
+::selection {
+  background: rgba(18, 145, 125, 0.22);
+}
+
+a,
+button,
+input,
+select,
+textarea {
+  transition-property: color, background-color, border-color, box-shadow, transform;
+  transition-duration: 180ms;
+}
