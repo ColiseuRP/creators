@@ -1,12 +1,37 @@
 import "server-only";
 
-import { env, isDiscordConfigured } from "@/lib/env";
+import { env } from "@/lib/env";
 import type { Creator, MetricSubmission, NoticeType } from "@/lib/types";
 
 export interface DiscordSendResult {
   status: "sent" | "failed" | "skipped";
   channelId: string | null;
   errorMessage: string | null;
+}
+
+function parseDiscordErrorMessage(rawBody: string) {
+  if (!rawBody) {
+    return "O Discord nao retornou detalhes sobre a falha.";
+  }
+
+  try {
+    const parsed = JSON.parse(rawBody) as {
+      code?: number | string;
+      message?: string;
+    };
+
+    const parts = [parsed.message, parsed.code ? `codigo ${parsed.code}` : null].filter(
+      Boolean,
+    );
+
+    if (parts.length > 0) {
+      return `Discord: ${parts.join(" / ")}.`;
+    }
+  } catch {
+    // Mantem o corpo bruto abaixo quando nao vier em JSON.
+  }
+
+  return rawBody.slice(0, 500);
 }
 
 export function formatMetricReviewDiscordMessage(
@@ -52,17 +77,17 @@ export async function sendDiscordChannelMessage(
 ): Promise<DiscordSendResult> {
   if (!channelId) {
     return {
-      status: "skipped",
+      status: "failed",
       channelId: null,
-      errorMessage: "Sala do Discord nao configurada para este destino.",
+      errorMessage: "Nenhum canal de destino foi configurado para este envio.",
     };
   }
 
-  if (!isDiscordConfigured) {
+  if (!env.DISCORD_BOT_TOKEN) {
     return {
-      status: "skipped",
+      status: "failed",
       channelId,
-      errorMessage: "A integracao com o Discord ainda nao esta pronta neste ambiente.",
+      errorMessage: "A variavel DISCORD_BOT_TOKEN nao foi carregada no servidor.",
     };
   }
 
@@ -83,7 +108,7 @@ export async function sendDiscordChannelMessage(
     return {
       status: "failed",
       channelId,
-      errorMessage: body.slice(0, 500) || "O Discord retornou um erro sem detalhes.",
+      errorMessage: parseDiscordErrorMessage(body),
     };
   }
 

@@ -30,7 +30,7 @@ const labels: Record<BadgeStatus, string> = {
   rejected: "Negada",
   sent: "Enviado",
   failed: "Falhou",
-  skipped: "Nao enviado",
+  skipped: "N\u00E3o enviado",
   info: "Aviso",
   success: "Confirmado",
   warning: "Atencao",

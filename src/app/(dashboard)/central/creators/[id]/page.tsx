@@ -1,3 +1,6 @@
+import { DiscordLogCard } from "@/components/discord-log-card";
+import { NoticeDiscordPanel } from "@/components/notice-discord-panel";
+import { NoticeMarkdown } from "@/components/notice-markdown";
 import { notFound } from "next/navigation";
 
 import { SectionCard } from "@/components/section-card";
@@ -125,9 +128,8 @@ export default async function CreatorDetailPage({
                     <p className="font-semibold text-[var(--white)]">{notice.title}</p>
                     <StatusBadge status={notice.type} />
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-                    {notice.message}
-                  </p>
+                  <NoticeMarkdown content={notice.message} className="mt-2" />
+                  <NoticeDiscordPanel notice={notice} />
                 </article>
               ))}
 
@@ -145,23 +147,7 @@ export default async function CreatorDetailPage({
           >
             <div className="space-y-3">
               {logs.map((log) => (
-                <article
-                  key={log.id}
-                  className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-4"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="text-sm font-semibold text-[var(--white)]">
-                      {log.message_type}
-                    </p>
-                    <StatusBadge status={log.status} />
-                  </div>
-                  <p className="mt-2 text-xs text-[var(--muted)]">
-                    {formatDate(log.sent_at)}
-                  </p>
-                  {log.error_message ? (
-                    <p className="mt-2 text-sm text-[#ffd0d0]">{log.error_message}</p>
-                  ) : null}
-                </article>
+                <DiscordLogCard key={log.id} log={log} />
               ))}
 
               {logs.length === 0 ? (

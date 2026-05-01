@@ -1,3 +1,5 @@
+import { NoticeDiscordPanel } from "@/components/notice-discord-panel";
+import { NoticeMarkdown } from "@/components/notice-markdown";
 import { NoticeComposer } from "@/components/forms/notice-composer";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
@@ -54,7 +56,8 @@ export default async function NoticesPage() {
                 </div>
                 <StatusBadge status={notice.type} />
               </div>
-              <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{notice.message}</p>
+              <NoticeMarkdown content={notice.message} className="mt-4" />
+              {actor.canManageCreators ? <NoticeDiscordPanel notice={notice} /> : null}
             </article>
           ))}
 

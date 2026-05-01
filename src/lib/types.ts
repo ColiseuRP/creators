@@ -4,7 +4,7 @@ export type CreatorStatus = "active" | "pending" | "paused";
 export type MetricStatus = "pending" | "approved" | "rejected";
 export type NoticeType = "info" | "success" | "warning";
 export type NoticeTargetType = "individual" | "general" | "category";
-export type DiscordLogStatus = "sent" | "failed" | "skipped";
+export type DiscordLogStatus = "pending" | "sent" | "failed" | "skipped";
 
 export interface Profile {
   id: string;
@@ -120,6 +120,12 @@ export interface CreatorNotice {
   sent_by: string | null;
   send_to_discord: boolean;
   sent_at: string;
+  discord_status?: DiscordLogStatus | null;
+  discord_channel_id?: string | null;
+  discord_error_message?: string | null;
+  discord_last_attempt_at?: string | null;
+  discord_sent_at?: string | null;
+  latest_discord_log?: DiscordMessageLog | null;
 }
 
 export interface DiscordSettings {
@@ -134,6 +140,7 @@ export interface DiscordSettings {
 
 export interface DiscordMessageLog {
   id: string;
+  notice_id?: string | null;
   target_type: NoticeTargetType | "metric_review";
   target_creator_id: string | null;
   channel_id: string | null;
@@ -141,6 +148,8 @@ export interface DiscordMessageLog {
   status: DiscordLogStatus;
   error_message: string | null;
   sent_at: string;
+  attempted_at?: string | null;
+  delivered_at?: string | null;
 }
 
 export interface SessionUser {

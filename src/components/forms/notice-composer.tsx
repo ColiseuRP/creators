@@ -84,7 +84,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
 
       const suffix =
         result.data?.discordStatus && result.data.discordStatus !== "sent"
-          ? ` Discord: ${result.data.errorMessage ?? result.data.discordStatus}.`
+          ? ` Discord: ${result.data.errorMessage ?? "O envio nao foi concluido."}`
           : discordLine;
 
       setFeedback(`Aviso publicado com sucesso.${suffix}`);
@@ -150,7 +150,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
             <option value="">Selecione um creator</option>
             {creators.map((creator) => (
               <option key={creator.id} value={creator.id}>
-                {creator.name} · {creator.category}
+                {creator.name} / {creator.category}
               </option>
             ))}
           </select>
@@ -193,6 +193,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
           onChange={(event) => setMessage(event.target.value)}
           rows={4}
           required
+          placeholder="Use **negrito**, *italico*, quebras de linha e mencoes como @everyone ou <@ID>."
           className="field-textarea"
         />
       </label>

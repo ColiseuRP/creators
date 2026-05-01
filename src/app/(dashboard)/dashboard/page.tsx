@@ -1,3 +1,6 @@
+import { DiscordLogCard } from "@/components/discord-log-card";
+import { NoticeDiscordPanel } from "@/components/notice-discord-panel";
+import { NoticeMarkdown } from "@/components/notice-markdown";
 import Link from "next/link";
 
 import { SectionCard } from "@/components/section-card";
@@ -171,7 +174,8 @@ export default async function DashboardPage() {
                   <p className="font-semibold text-[var(--white)]">{notice.title}</p>
                   <StatusBadge status={notice.type} />
                 </div>
-                <p className="mt-2 text-sm leading-6 text-[var(--muted)]">{notice.message}</p>
+                <NoticeMarkdown content={notice.message} className="mt-2" />
+                {actor.canManageCreators ? <NoticeDiscordPanel notice={notice} /> : null}
               </article>
             ))}
 
@@ -186,20 +190,7 @@ export default async function DashboardPage() {
                 <p className="font-semibold text-[var(--white)]">Envios no Discord</p>
                 <div className="mt-3 space-y-3">
                   {snapshot.recentLogs.map((log) => (
-                    <div
-                      key={log.id}
-                      className="flex items-center justify-between gap-4 rounded-2xl bg-[rgba(255,255,255,0.03)] px-4 py-3"
-                    >
-                      <div>
-                        <p className="text-sm font-semibold text-[var(--white)]">
-                          {log.message_type}
-                        </p>
-                        <p className="text-xs text-[var(--muted)]">
-                          {formatDate(log.sent_at)}
-                        </p>
-                      </div>
-                      <StatusBadge status={log.status} />
-                    </div>
+                    <DiscordLogCard key={log.id} log={log} />
                   ))}
 
                   {snapshot.recentLogs.length === 0 ? (

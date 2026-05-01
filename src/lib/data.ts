@@ -66,13 +66,42 @@ function filterMockCreators(actor: SessionContext, creators: Creator[]) {
   return creators.filter((creator) => creator.id === actor.creator?.id);
 }
 
+function attachLatestDiscordLogsToNotices(
+  actor: SessionContext,
+  notices: CreatorNotice[],
+  logs: DiscordMessageLog[],
+) {
+  if (!actor.canManageCreators) {
+    return notices;
+  }
+
+  const latestLogByNoticeId = new Map<string, DiscordMessageLog>();
+
+  for (const log of logs) {
+    if (!log.notice_id || latestLogByNoticeId.has(log.notice_id)) {
+      continue;
+    }
+
+    latestLogByNoticeId.set(log.notice_id, log);
+  }
+
+  return notices.map((notice) => ({
+    ...notice,
+    latest_discord_log: latestLogByNoticeId.get(notice.id) ?? null,
+  }));
+}
+
 function hydrateMockData(actor: SessionContext) {
   const data = getMockData();
 
   return {
     creators: filterMockCreators(actor, data.creators),
     metrics: filterMockMetrics(actor, data.metricSubmissions),
-    notices: filterMockNotices(actor, data.notices),
+    notices: attachLatestDiscordLogsToNotices(
+      actor,
+      filterMockNotices(actor, data.notices),
+      data.discordLogs,
+    ),
     applications: actor.canManageCreators ? data.applications : [],
     discordLogs: actor.canManageCreators ? data.discordLogs : [],
     discordSettings: actor.canManageCreators ? data.discordSettings : null,
@@ -231,12 +260,29 @@ export async function getNotices(actor: SessionContext): Promise<CreatorNotice[]
     return [];
   }
 
-  const { data } = await supabase
+  const { data: noticeRows } = await supabase
     .from("creator_notices")
     .select("*")
     .order("sent_at", { ascending: false });
 
-  return (data ?? []) as CreatorNotice[];
+  const notices = (noticeRows ?? []) as CreatorNotice[];
+
+  if (!actor.canManageCreators || notices.length === 0) {
+    return notices;
+  }
+
+  const noticeIds = notices.map((notice) => notice.id);
+  const { data: logRows } = await supabase
+    .from("discord_message_logs")
+    .select("*")
+    .in("notice_id", noticeIds)
+    .order("attempted_at", { ascending: false });
+
+  return attachLatestDiscordLogsToNotices(
+    actor,
+    notices,
+    (logRows ?? []) as DiscordMessageLog[],
+  );
 }
 
 export async function getDiscordLogs(actor: SessionContext): Promise<DiscordMessageLog[]> {
@@ -257,7 +303,7 @@ export async function getDiscordLogs(actor: SessionContext): Promise<DiscordMess
   const { data } = await supabase
     .from("discord_message_logs")
     .select("*")
-    .order("sent_at", { ascending: false })
+    .order("attempted_at", { ascending: false })
     .limit(20);
 
   return (data ?? []) as DiscordMessageLog[];
@@ -367,7 +413,19 @@ export async function getCreatorDetail(actor: SessionContext, creatorId: string)
         (notice.target_type === "category" &&
           notice.target_category === creator.category),
     ),
-    logs: logs.filter((log) => log.target_creator_id === creatorId),
+    logs: logs.filter(
+      (log) =>
+        log.target_creator_id === creatorId ||
+        (log.notice_id &&
+          notices.some(
+            (notice) =>
+              notice.id === log.notice_id &&
+              (notice.target_creator_id === creatorId ||
+                notice.target_type === "general" ||
+                (notice.target_type === "category" &&
+                  notice.target_category === creator.category)),
+          )),
+    ),
   };
 }
 

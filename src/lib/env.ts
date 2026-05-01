@@ -40,12 +40,20 @@ export const isSupabaseConfigured = Boolean(
 );
 
 export const isServiceRoleConfigured = Boolean(env.SUPABASE_SERVICE_ROLE_KEY);
+export const isDiscordBotTokenConfigured = Boolean(env.DISCORD_BOT_TOKEN);
+export const isDiscordGuildConfigured = Boolean(env.DISCORD_GUILD_ID);
+export const isDiscordCreatorsCategoryConfigured = Boolean(
+  env.DISCORD_CREATORS_CATEGORY_ID,
+);
+export const isDiscordGeneralChannelConfigured = Boolean(
+  env.DISCORD_GENERAL_CREATORS_CHANNEL_ID,
+);
 
 export const isDiscordConfigured = Boolean(
-  env.DISCORD_BOT_TOKEN &&
-    env.DISCORD_GUILD_ID &&
-    env.DISCORD_CREATORS_CATEGORY_ID &&
-    env.DISCORD_GENERAL_CREATORS_CHANNEL_ID,
+  isDiscordBotTokenConfigured &&
+    isDiscordGuildConfigured &&
+    isDiscordCreatorsCategoryConfigured &&
+    isDiscordGeneralChannelConfigured,
 );
 
 export const isMockMode = process.env.NODE_ENV !== "production" && !isSupabaseConfigured;

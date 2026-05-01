@@ -1,9 +1,16 @@
+import { DiscordLogCard } from "@/components/discord-log-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
-import { env, isDiscordConfigured, isServiceRoleConfigured } from "@/lib/env";
+import {
+  isDiscordBotTokenConfigured,
+  isDiscordConfigured,
+  isDiscordCreatorsCategoryConfigured,
+  isDiscordGeneralChannelConfigured,
+  isDiscordGuildConfigured,
+  isServiceRoleConfigured,
+} from "@/lib/env";
 import { getDiscordLogs, getDiscordSettings } from "@/lib/data";
 import { requireSession } from "@/lib/session";
-import { formatDate } from "@/lib/utils";
 
 export default async function DiscordSettingsPage() {
   const actor = await requireSession(["admin_general", "responsavel_creators"]);
@@ -14,10 +21,10 @@ export default async function DiscordSettingsPage() {
 
   const checks: Array<[string, boolean]> = [
     ["Chave interna da equipe", isServiceRoleConfigured],
-    ["Credencial do bot", Boolean(env.DISCORD_BOT_TOKEN)],
-    ["Servidor do Coliseu", Boolean(env.DISCORD_GUILD_ID)],
-    ["Categoria dos creators", Boolean(env.DISCORD_CREATORS_CATEGORY_ID)],
-    ["Canal geral dos creators", Boolean(env.DISCORD_GENERAL_CREATORS_CHANNEL_ID)],
+    ["Credencial do bot", isDiscordBotTokenConfigured],
+    ["Servidor do Coliseu", isDiscordGuildConfigured],
+    ["Categoria dos creators", isDiscordCreatorsCategoryConfigured],
+    ["Canal geral dos creators", isDiscordGeneralChannelConfigured],
   ];
 
   return (
@@ -88,25 +95,7 @@ export default async function DiscordSettingsPage() {
       >
         <div className="space-y-4">
           {logs.map((log) => (
-            <article
-              key={log.id}
-              className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5"
-            >
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p className="font-semibold text-[var(--white)]">{log.message_type}</p>
-                  <p className="mt-1 text-sm text-[var(--muted)]">
-                    {formatDate(log.sent_at)} / canal {log.channel_id || "nao definido"}
-                  </p>
-                </div>
-                <StatusBadge status={log.status} />
-              </div>
-              {log.error_message ? (
-                <p className="mt-4 rounded-2xl border border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] px-4 py-3 text-sm text-[#ffd0d0]">
-                  {log.error_message}
-                </p>
-              ) : null}
-            </article>
+            <DiscordLogCard key={log.id} log={log} />
           ))}
 
           {logs.length === 0 ? (

@@ -12,12 +12,16 @@ import {
   formatNoticeDiscordMessage,
   sendDiscordChannelMessage,
 } from "@/lib/discord";
+import { getNoticeDiscordMessageType } from "@/lib/discord-presenter";
 import {
   createSupabaseServerClient,
   createSupabaseServiceRoleClient,
 } from "@/lib/supabase/server";
 import type {
   Creator,
+  CreatorNotice,
+  DiscordLogStatus,
+  DiscordMessageLog,
   NoticeTargetType,
   NoticeType,
   SessionContext,
@@ -66,12 +70,203 @@ interface CreatorApplicationInput {
   observations?: string;
 }
 
+interface PendingDiscordLogInput {
+  noticeId?: string | null;
+  targetType: NoticeTargetType | "metric_review";
+  targetCreatorId?: string | null;
+  channelId?: string | null;
+  messageType: string;
+}
+
+type ServiceClient = NonNullable<ReturnType<typeof createSupabaseServiceRoleClient>>;
+
 function requireCreatorContext(actor: SessionContext) {
   if (!actor.creator) {
     throw new Error("Creator nao encontrado para a sessao atual.");
   }
 
   return actor.creator;
+}
+
+function getNowIso() {
+  return new Date().toISOString();
+}
+
+async function getLatestDiscordSettings(serviceClient: ServiceClient) {
+  const { data } = await serviceClient
+    .from("discord_settings")
+    .select("*")
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return data;
+}
+
+async function insertPendingDiscordLog(
+  serviceClient: ServiceClient,
+  input: PendingDiscordLogInput,
+) {
+  const attemptedAt = getNowIso();
+
+  const { data } = await serviceClient
+    .from("discord_message_logs")
+    .insert({
+      notice_id: input.noticeId ?? null,
+      target_type: input.targetType,
+      target_creator_id: input.targetCreatorId ?? null,
+      channel_id: input.channelId ?? null,
+      message_type: input.messageType,
+      status: "pending",
+      error_message: null,
+      sent_at: attemptedAt,
+      attempted_at: attemptedAt,
+      delivered_at: null,
+    })
+    .select("*")
+    .single();
+
+  return {
+    log: (data as DiscordMessageLog | null) ?? null,
+    attemptedAt,
+  };
+}
+
+async function finalizeDiscordLog(
+  serviceClient: ServiceClient,
+  logId: string | null | undefined,
+  input: {
+    channelId: string | null;
+    status: DiscordLogStatus;
+    errorMessage?: string | null;
+  },
+) {
+  if (!logId) {
+    return {
+      deliveredAt: input.status === "sent" ? getNowIso() : null,
+    };
+  }
+
+  const deliveredAt = input.status === "sent" ? getNowIso() : null;
+
+  await serviceClient
+    .from("discord_message_logs")
+    .update({
+      channel_id: input.channelId,
+      status: input.status,
+      error_message: input.errorMessage ?? null,
+      delivered_at: deliveredAt,
+    })
+    .eq("id", logId);
+
+  return { deliveredAt };
+}
+
+async function updateNoticeDiscordState(
+  serviceClient: ServiceClient,
+  noticeId: string,
+  input: {
+    status: DiscordLogStatus | null;
+    channelId?: string | null;
+    errorMessage?: string | null;
+    attemptedAt?: string | null;
+    sentAt?: string | null;
+  },
+) {
+  await serviceClient
+    .from("creator_notices")
+    .update({
+      discord_status: input.status,
+      discord_channel_id: input.channelId ?? null,
+      discord_error_message: input.errorMessage ?? null,
+      discord_last_attempt_at: input.attemptedAt ?? null,
+      discord_sent_at: input.sentAt ?? null,
+    })
+    .eq("id", noticeId);
+}
+
+async function getCreatorChannel(serviceClient: ServiceClient, creatorId: string) {
+  const { data } = await serviceClient
+    .from("creators")
+    .select("*")
+    .eq("id", creatorId)
+    .single();
+
+  return (data as Creator | null) ?? null;
+}
+
+async function resolveNoticeChannel(
+  serviceClient: ServiceClient,
+  notice: CreatorNotice,
+  settings: Awaited<ReturnType<typeof getLatestDiscordSettings>>,
+) {
+  if (notice.target_type === "individual" && notice.target_creator_id) {
+    const creator = await getCreatorChannel(serviceClient, notice.target_creator_id);
+
+    return {
+      creator,
+      channelId: creator?.discord_channel_id ?? null,
+    };
+  }
+
+  return {
+    creator: null,
+    channelId: settings?.general_creators_channel_id ?? null,
+  };
+}
+
+async function deliverNoticeToDiscord(
+  serviceClient: ServiceClient,
+  notice: CreatorNotice,
+) {
+  const settings = await getLatestDiscordSettings(serviceClient);
+  const { channelId } = await resolveNoticeChannel(serviceClient, notice, settings);
+  const messageType = getNoticeDiscordMessageType(notice.target_type);
+  const { log, attemptedAt } = await insertPendingDiscordLog(serviceClient, {
+    noticeId: notice.id,
+    targetType: notice.target_type,
+    targetCreatorId: notice.target_creator_id ?? null,
+    channelId,
+    messageType,
+  });
+
+  let result:
+    | Awaited<ReturnType<typeof sendDiscordChannelMessage>>
+    | { status: "skipped"; channelId: string | null; errorMessage: string | null };
+
+  if (settings?.auto_send_enabled === false) {
+    result = {
+      status: "skipped",
+      channelId,
+      errorMessage: "O envio automatico de avisos esta desligado nas configuracoes internas.",
+    };
+  } else {
+    result = await sendDiscordChannelMessage(
+      channelId,
+      formatNoticeDiscordMessage(notice.title, notice.message, notice.type),
+    );
+  }
+
+  const { deliveredAt } = await finalizeDiscordLog(serviceClient, log?.id, {
+    channelId: result.channelId,
+    status: result.status,
+    errorMessage: result.errorMessage,
+  });
+
+  await updateNoticeDiscordState(serviceClient, notice.id, {
+    status: result.status,
+    channelId: result.channelId,
+    errorMessage: result.errorMessage,
+    attemptedAt,
+    sentAt: deliveredAt,
+  });
+
+  return {
+    ...result,
+    attemptedAt,
+    sentAt: deliveredAt,
+    messageType,
+  };
 }
 
 export async function uploadMetricAttachment(actor: SessionContext, file: File) {
@@ -256,31 +451,6 @@ export async function submitCreatorApplication(payload: CreatorApplicationInput)
   };
 }
 
-async function insertDiscordLog(
-  serviceClient: ReturnType<typeof createSupabaseServiceRoleClient>,
-  input: {
-    targetType: NoticeTargetType | "metric_review";
-    targetCreatorId?: string | null;
-    channelId?: string | null;
-    messageType: string;
-    status: "sent" | "failed" | "skipped";
-    errorMessage?: string | null;
-  },
-) {
-  if (!serviceClient) {
-    return;
-  }
-
-  await serviceClient.from("discord_message_logs").insert({
-    target_type: input.targetType,
-    target_creator_id: input.targetCreatorId ?? null,
-    channel_id: input.channelId ?? null,
-    message_type: input.messageType,
-    status: input.status,
-    error_message: input.errorMessage ?? null,
-  });
-}
-
 export async function reviewMetric(actor: SessionContext, input: ReviewMetricInput) {
   if (!actor.profile) {
     throw new Error("Perfil nao encontrado.");
@@ -311,11 +481,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     throw new Error("Metrica nao encontrada.");
   }
 
-  const { data: creator } = await serviceClient
-    .from("creators")
-    .select("*")
-    .eq("id", metric.creator_id)
-    .single();
+  const creator = await getCreatorChannel(serviceClient, metric.creator_id);
 
   if (!creator) {
     throw new Error("Creator nao encontrado para a metrica.");
@@ -327,7 +493,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     .from("metric_submissions")
     .update({
       status: input.decision,
-      reviewed_at: new Date().toISOString(),
+      reviewed_at: getNowIso(),
       reviewed_by: actor.profile.id,
       admin_observation: reviewReason,
       rejection_reason: input.decision === "rejected" ? reviewReason : null,
@@ -355,39 +521,37 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     target_type: "individual",
     target_creator_id: creator.id,
     sent_by: actor.profile.id,
-    send_to_discord: true,
+    send_to_discord: false,
   });
 
-  const { data: discordSettings } = await serviceClient
-    .from("discord_settings")
-    .select("*")
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  const settings = await getLatestDiscordSettings(serviceClient);
+  const { log } = await insertPendingDiscordLog(serviceClient, {
+    targetType: "metric_review",
+    targetCreatorId: creator.id,
+    channelId: creator.discord_channel_id,
+    messageType:
+      input.decision === "approved" ? "metric_approved" : "metric_rejected",
+  });
 
   const discordResult =
-    discordSettings?.auto_send_enabled === false
+    settings?.auto_send_enabled === false
       ? {
           status: "skipped" as const,
           channelId: creator.discord_channel_id,
-          errorMessage: "O envio automatico de avisos esta desligado.",
+          errorMessage: "O envio automatico de avisos esta desligado nas configuracoes internas.",
         }
       : await sendDiscordChannelMessage(
           creator.discord_channel_id,
           formatMetricReviewDiscordMessage(
-            creator as Creator,
+            creator,
             metric,
             input.decision,
             reviewReason ?? undefined,
           ),
         );
 
-  await insertDiscordLog(serviceClient, {
-    targetType: "metric_review",
-    targetCreatorId: creator.id,
+  await finalizeDiscordLog(serviceClient, log?.id, {
     channelId: discordResult.channelId,
-    messageType:
-      input.decision === "approved" ? "metric_approved" : "metric_rejected",
     status: discordResult.status,
     errorMessage: discordResult.errorMessage,
   });
@@ -397,6 +561,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
   revalidatePath("/dashboard");
   revalidatePath("/notices");
   revalidatePath("/room");
+  revalidatePath("/settings/discord");
 
   return {
     metricId: input.metricId,
@@ -404,23 +569,6 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     discordStatus: discordResult.status,
     errorMessage: discordResult.errorMessage,
   };
-}
-
-async function getCreatorChannel(
-  serviceClient: ReturnType<typeof createSupabaseServiceRoleClient>,
-  creatorId: string,
-) {
-  if (!serviceClient) {
-    return null;
-  }
-
-  const { data } = await serviceClient
-    .from("creators")
-    .select("*")
-    .eq("id", creatorId)
-    .single();
-
-  return (data as Creator | null) ?? null;
 }
 
 export async function createNotice(actor: SessionContext, input: NoticeInput) {
@@ -432,6 +580,7 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
     return {
       status: "created",
       discordStatus: input.sendToDiscord ? "skipped" : null,
+      noticeId: `mock-notice-${Date.now()}`,
     };
   }
 
@@ -441,18 +590,27 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
     throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
   }
 
-  const { error: noticeError } = await serviceClient.from("creator_notices").insert({
-    title: input.title,
-    message: input.message,
-    type: input.type,
-    target_type: input.targetType,
-    target_creator_id: input.targetCreatorId ?? null,
-    target_category: input.targetCategory ?? null,
-    sent_by: actor.profile.id,
-    send_to_discord: input.sendToDiscord,
-  });
+  const { data: notice, error: noticeError } = await serviceClient
+    .from("creator_notices")
+    .insert({
+      title: input.title,
+      message: input.message,
+      type: input.type,
+      target_type: input.targetType,
+      target_creator_id: input.targetCreatorId ?? null,
+      target_category: input.targetCategory ?? null,
+      sent_by: actor.profile.id,
+      send_to_discord: input.sendToDiscord,
+      discord_status: input.sendToDiscord ? "pending" : null,
+      discord_channel_id: null,
+      discord_error_message: null,
+      discord_last_attempt_at: null,
+      discord_sent_at: null,
+    })
+    .select("*")
+    .single();
 
-  if (noticeError) {
+  if (noticeError || !notice) {
     throw new Error("Nao foi possivel enviar o aviso.");
   }
 
@@ -460,53 +618,87 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
   let errorMessage: string | null = null;
 
   if (input.sendToDiscord) {
-    const { data: discordSettings } = await serviceClient
-      .from("discord_settings")
-      .select("*")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    let channelId: string | null =
-      discordSettings?.general_creators_channel_id ?? null;
-
-    if (input.targetType === "individual" && input.targetCreatorId) {
-      const creator = await getCreatorChannel(serviceClient, input.targetCreatorId);
-      channelId = creator?.discord_channel_id ?? null;
-    }
-
-    const discordResult =
-      discordSettings?.auto_send_enabled === false
-        ? {
-            status: "skipped" as const,
-            channelId,
-            errorMessage: "O envio automatico de avisos esta desligado.",
-          }
-        : await sendDiscordChannelMessage(
-            channelId,
-            formatNoticeDiscordMessage(input.title, input.message, input.type),
-          );
+    const discordResult = await deliverNoticeToDiscord(
+      serviceClient,
+      notice as CreatorNotice,
+    );
 
     discordStatus = discordResult.status;
     errorMessage = discordResult.errorMessage;
-
-    await insertDiscordLog(serviceClient, {
-      targetType: input.targetType,
-      targetCreatorId: input.targetCreatorId ?? null,
-      channelId: discordResult.channelId,
-      messageType: "creator_notice",
-      status: discordResult.status,
-      errorMessage: discordResult.errorMessage,
-    });
   }
 
   revalidatePath("/notices");
   revalidatePath("/dashboard");
+  revalidatePath("/settings/discord");
+
+  if (input.targetType === "individual" && input.targetCreatorId) {
+    revalidatePath(`/central/creators/${input.targetCreatorId}`);
+  }
 
   return {
     status: "created",
     discordStatus,
     errorMessage,
+    noticeId: notice.id,
+  };
+}
+
+export async function resendNoticeToDiscord(actor: SessionContext, noticeId: string) {
+  if (!actor.profile) {
+    throw new Error("Perfil nao encontrado.");
+  }
+
+  if (actor.mockMode) {
+    return {
+      noticeId,
+      discordStatus: "skipped",
+      errorMessage: "Demonstracao ativa: nenhum envio real foi executado.",
+    };
+  }
+
+  const serviceClient = createSupabaseServiceRoleClient();
+
+  if (!serviceClient) {
+    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
+  }
+
+  const { data: notice } = await serviceClient
+    .from("creator_notices")
+    .select("*")
+    .eq("id", noticeId)
+    .single();
+
+  if (!notice) {
+    throw new Error("Aviso nao encontrado.");
+  }
+
+  if (!notice.send_to_discord) {
+    await serviceClient
+      .from("creator_notices")
+      .update({ send_to_discord: true })
+      .eq("id", noticeId);
+  }
+
+  const discordResult = await deliverNoticeToDiscord(
+    serviceClient,
+    {
+      ...(notice as CreatorNotice),
+      send_to_discord: true,
+    },
+  );
+
+  revalidatePath("/notices");
+  revalidatePath("/dashboard");
+  revalidatePath("/settings/discord");
+
+  if (notice.target_type === "individual" && notice.target_creator_id) {
+    revalidatePath(`/central/creators/${notice.target_creator_id}`);
+  }
+
+  return {
+    noticeId,
+    discordStatus: discordResult.status,
+    errorMessage: discordResult.errorMessage,
   };
 }
 
@@ -535,23 +727,21 @@ export async function sendManualDiscordMessage(
   }
 
   if (input.targetType === "general" && !channelId) {
-    const { data: settings } = await serviceClient
-      .from("discord_settings")
-      .select("*")
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
+    const settings = await getLatestDiscordSettings(serviceClient);
     channelId = settings?.general_creators_channel_id ?? null;
   }
 
-  const result = await sendDiscordChannelMessage(channelId, input.content);
-
-  await insertDiscordLog(serviceClient, {
+  const { log } = await insertPendingDiscordLog(serviceClient, {
     targetType: input.targetType,
     targetCreatorId: input.targetCreatorId ?? null,
-    channelId: result.channelId,
+    channelId,
     messageType: input.messageType,
+  });
+
+  const result = await sendDiscordChannelMessage(channelId, input.content);
+
+  await finalizeDiscordLog(serviceClient, log?.id, {
+    channelId: result.channelId,
     status: result.status,
     errorMessage: result.errorMessage,
   });
