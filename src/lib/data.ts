@@ -1,9 +1,12 @@
 import "server-only";
 
-import { SUPABASE_STORAGE_BUCKET } from "@/lib/env";
+import { SUPABASE_STORAGE_BUCKET, isMockMode } from "@/lib/env";
 import { getMockData } from "@/lib/mock";
 import { canAccessCreator } from "@/lib/permissions";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
+} from "@/lib/supabase/server";
 import type {
   Creator,
   CreatorApplication,
@@ -16,6 +19,14 @@ import type {
   MetricSubmission,
   SessionContext,
 } from "@/lib/types";
+
+type ServerSupabaseClient = NonNullable<
+  Awaited<ReturnType<typeof createSupabaseServerClient>>
+>;
+type ServiceSupabaseClient = NonNullable<
+  ReturnType<typeof createSupabaseServiceRoleClient>
+>;
+type SupabaseReader = ServerSupabaseClient | ServiceSupabaseClient;
 
 function filterMockNotices(actor: SessionContext, notices: CreatorNotice[]) {
   if (actor.isAdmin || actor.canManageCreators) {
@@ -69,14 +80,14 @@ function hydrateMockData(actor: SessionContext) {
 }
 
 async function createSignedUrls(
-  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  supabase: ServerSupabaseClient | null,
   attachments: MetricAttachment[],
 ) {
   if (!supabase || attachments.length === 0) {
     return attachments;
   }
 
-  const signed = await Promise.all(
+  return Promise.all(
     attachments.map(async (attachment) => {
       const { data } = await supabase.storage
         .from(SUPABASE_STORAGE_BUCKET)
@@ -88,27 +99,30 @@ async function createSignedUrls(
       };
     }),
   );
-
-  return signed;
 }
 
-async function loadCreatorsBundle(actor: SessionContext) {
-  if (actor.mockMode) {
-    return hydrateMockData(actor).creators;
-  }
-
-  const supabase = await createSupabaseServerClient();
-
-  if (!supabase) {
-    return [];
-  }
-
+async function loadCreatorsWithClient(
+  supabase: SupabaseReader,
+  options?: {
+    creatorIds?: string[];
+    profileIds?: string[];
+    onlyActive?: boolean;
+  },
+) {
   let creatorsQuery = supabase.from("creators").select("*").order("joined_at", {
     ascending: false,
   });
 
-  if (actor.role === "creator" && actor.creator) {
-    creatorsQuery = creatorsQuery.eq("id", actor.creator.id);
+  if (options?.onlyActive) {
+    creatorsQuery = creatorsQuery.eq("status", "active");
+  }
+
+  if (options?.creatorIds?.length) {
+    creatorsQuery = creatorsQuery.in("id", options.creatorIds);
+  }
+
+  if (options?.profileIds?.length) {
+    creatorsQuery = creatorsQuery.in("profile_id", options.profileIds);
   }
 
   const { data: creatorsRows } = await creatorsQuery;
@@ -136,6 +150,38 @@ async function loadCreatorsBundle(actor: SessionContext) {
         (room) => room?.creator_id === creator.id,
       ) ?? null,
   }));
+}
+
+async function loadCreatorsBundle(actor: SessionContext) {
+  if (actor.mockMode) {
+    return hydrateMockData(actor).creators;
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return [];
+  }
+
+  return loadCreatorsWithClient(supabase, {
+    creatorIds: actor.role === "creator" && actor.creator ? [actor.creator.id] : undefined,
+  });
+}
+
+export async function getPublicCreators() {
+  if (isMockMode) {
+    return getMockData().creators.filter((creator) => creator.status === "active");
+  }
+
+  const serviceClient = createSupabaseServiceRoleClient();
+
+  if (!serviceClient) {
+    return [];
+  }
+
+  return loadCreatorsWithClient(serviceClient, {
+    onlyActive: true,
+  });
 }
 
 export async function getCreators(actor: SessionContext) {
@@ -350,6 +396,7 @@ export async function getDashboardSnapshot(
     creatorsCount: creators.length,
     pendingMetricsCount: metrics.filter((metric) => metric.status === "pending").length,
     approvedMetricsCount: metrics.filter((metric) => metric.status === "approved").length,
+    rejectedMetricsCount: metrics.filter((metric) => metric.status === "rejected").length,
     pendingApplicationsCount: applications.filter(
       (application) => application.status === "pending",
     ).length,

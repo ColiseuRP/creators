@@ -5,6 +5,12 @@ import { getCreators, getNotices } from "@/lib/data";
 import { requireSession } from "@/lib/session";
 import { formatDate } from "@/lib/utils";
 
+const targetLabels = {
+  general: "Aviso geral",
+  individual: "Sala individual",
+  category: "Categoria",
+} as const;
+
 export default async function NoticesPage() {
   const actor = await requireSession();
   const [notices, creators] = await Promise.all([
@@ -16,30 +22,34 @@ export default async function NoticesPage() {
     <div className="space-y-6">
       {actor.canManageCreators ? (
         <SectionCard
-          title="Novo aviso"
-          description="Envie avisos gerais, por categoria ou individuais, com opção de encaminhar ao Discord."
+          title="Novo aviso da arena"
+          description="Envie avisos gerais, por categoria ou individuais, com a opcao de encaminhar o recado ao Discord."
         >
           <NoticeComposer creators={creators} />
         </SectionCard>
       ) : null}
 
       <SectionCard
-        title="Avisos internos"
-        description="Histórico dos comunicados exibidos no painel conforme seu papel e escopo."
+        title={actor.canManageCreators ? "Historico de avisos" : "Avisos recebidos"}
+        description={
+          actor.canManageCreators
+            ? "Recados ja enviados pela equipe para manter a operacao da cidade organizada."
+            : "Comunicados visiveis para voce dentro da sua jornada como creator."
+        }
       >
         <div className="space-y-4">
           {notices.map((notice) => (
             <article
               key={notice.id}
-              className="rounded-[28px] border border-[rgba(19,32,45,0.08)] bg-white/88 p-5"
+              className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5"
             >
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="font-display text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+                  <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
                     {notice.title}
                   </p>
                   <p className="mt-2 text-sm text-[var(--muted)]">
-                    {formatDate(notice.sent_at)} · destino {notice.target_type}
+                    {formatDate(notice.sent_at)} / destino {targetLabels[notice.target_type]}
                   </p>
                 </div>
                 <StatusBadge status={notice.type} />
@@ -47,6 +57,12 @@ export default async function NoticesPage() {
               <p className="mt-4 text-sm leading-7 text-[var(--muted)]">{notice.message}</p>
             </article>
           ))}
+
+          {notices.length === 0 ? (
+            <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
+              Nenhum aviso foi registrado por aqui ainda.
+            </div>
+          ) : null}
         </div>
       </SectionCard>
     </div>

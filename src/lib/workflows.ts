@@ -12,7 +12,10 @@ import {
   formatNoticeDiscordMessage,
   sendDiscordChannelMessage,
 } from "@/lib/discord";
-import { createSupabaseServerClient, createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import {
+  createSupabaseServerClient,
+  createSupabaseServiceRoleClient,
+} from "@/lib/supabase/server";
 import type {
   Creator,
   NoticeTargetType,
@@ -46,9 +49,26 @@ interface ManualDiscordMessageInput {
   content: string;
 }
 
+interface CreatorApplicationInput {
+  name: string;
+  discordName: string;
+  discordId: string;
+  cityName: string;
+  age: number;
+  category: string;
+  twitchUrl?: string;
+  tiktokUrl?: string;
+  youtubeUrl?: string;
+  instagramUrl?: string;
+  frequency: string;
+  reason: string;
+  contentLinks?: string;
+  observations?: string;
+}
+
 function requireCreatorContext(actor: SessionContext) {
   if (!actor.creator) {
-    throw new Error("Creator não encontrado para a sessão atual.");
+    throw new Error("Creator nao encontrado para a sessao atual.");
   }
 
   return actor.creator;
@@ -57,8 +77,12 @@ function requireCreatorContext(actor: SessionContext) {
 export async function uploadMetricAttachment(actor: SessionContext, file: File) {
   const creator = requireCreatorContext(actor);
 
-  if (!ACCEPTED_ATTACHMENT_TYPES.includes(file.type as (typeof ACCEPTED_ATTACHMENT_TYPES)[number])) {
-    throw new Error("Formato de arquivo inválido. Envie PNG, JPG, JPEG ou WEBP.");
+  if (
+    !ACCEPTED_ATTACHMENT_TYPES.includes(
+      file.type as (typeof ACCEPTED_ATTACHMENT_TYPES)[number],
+    )
+  ) {
+    throw new Error("Formato de arquivo invalido. Envie PNG, JPG, JPEG ou WEBP.");
   }
 
   if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
@@ -77,7 +101,7 @@ export async function uploadMetricAttachment(actor: SessionContext, file: File) 
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    throw new Error("Supabase não configurado para upload.");
+    throw new Error("Nao foi possivel enviar os anexos no momento.");
   }
 
   const storagePath = `${creator.id}/${Date.now()}-${sanitizeFilename(file.name)}`;
@@ -92,7 +116,7 @@ export async function uploadMetricAttachment(actor: SessionContext, file: File) 
     });
 
   if (error) {
-    throw new Error(error.message);
+    throw new Error("Nao foi possivel salvar um dos anexos enviados.");
   }
 
   return {
@@ -133,7 +157,7 @@ export async function submitMetric(
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    throw new Error("Supabase não configurado para envio de métrica.");
+    throw new Error("Nao foi possivel registrar a metrica agora.");
   }
 
   const { data: metric, error: metricError } = await supabase
@@ -157,7 +181,7 @@ export async function submitMetric(
     .single();
 
   if (metricError || !metric) {
-    throw new Error(metricError?.message ?? "Não foi possível salvar a métrica.");
+    throw new Error("Nao foi possivel salvar a metrica.");
   }
 
   if (payload.attachments.length > 0) {
@@ -171,17 +195,64 @@ export async function submitMetric(
     );
 
     if (attachmentError) {
-      throw new Error(attachmentError.message);
+      throw new Error("A metrica foi registrada, mas houve falha ao vincular os anexos.");
     }
   }
 
   revalidatePath("/metrics");
   revalidatePath("/dashboard");
+  revalidatePath("/room");
 
   return {
     id: metric.id,
     creatorId: metric.creator_id,
     status: metric.status,
+  };
+}
+
+export async function submitCreatorApplication(payload: CreatorApplicationInput) {
+  if (!createSupabaseServiceRoleClient() && !(await createSupabaseServerClient())) {
+    return {
+      status: "submitted",
+      mode: "mock" as const,
+    };
+  }
+
+  const serviceClient = createSupabaseServiceRoleClient();
+  const supabase = serviceClient ?? (await createSupabaseServerClient());
+
+  if (!supabase) {
+    throw new Error("Nao foi possivel receber sua inscricao agora.");
+  }
+
+  const { error } = await supabase.from("creator_applications").insert({
+    name: payload.name,
+    discord_name: payload.discordName,
+    discord_id: payload.discordId,
+    city_name: payload.cityName,
+    age: payload.age,
+    category: payload.category,
+    twitch_url: payload.twitchUrl || null,
+    tiktok_url: payload.tiktokUrl || null,
+    youtube_url: payload.youtubeUrl || null,
+    instagram_url: payload.instagramUrl || null,
+    frequency: payload.frequency,
+    reason: payload.reason,
+    content_links: payload.contentLinks || null,
+    observations: payload.observations || null,
+    status: "pending",
+  });
+
+  if (error) {
+    throw new Error("Nao foi possivel enviar sua inscricao agora.");
+  }
+
+  revalidatePath("/inscricao");
+  revalidatePath("/applications");
+
+  return {
+    status: "submitted",
+    mode: "live" as const,
   };
 }
 
@@ -212,7 +283,7 @@ async function insertDiscordLog(
 
 export async function reviewMetric(actor: SessionContext, input: ReviewMetricInput) {
   if (!actor.profile) {
-    throw new Error("Perfil não encontrado.");
+    throw new Error("Perfil nao encontrado.");
   }
 
   if (actor.mockMode) {
@@ -220,14 +291,14 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
       metricId: input.metricId,
       decision: input.decision,
       discordStatus: "skipped",
-      errorMessage: "Modo demo ativo: nenhuma alteração persistida.",
+      errorMessage: "Demonstracao ativa: nenhuma alteracao foi salva.",
     };
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
 
   if (!serviceClient) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada.");
+    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
   }
 
   const { data: metric } = await serviceClient
@@ -237,7 +308,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     .single();
 
   if (!metric) {
-    throw new Error("Métrica não encontrada.");
+    throw new Error("Metrica nao encontrada.");
   }
 
   const { data: creator } = await serviceClient
@@ -247,7 +318,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     .single();
 
   if (!creator) {
-    throw new Error("Creator não encontrado para a métrica.");
+    throw new Error("Creator nao encontrado para a metrica.");
   }
 
   const reviewReason = input.reason?.trim() || null;
@@ -264,7 +335,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     .eq("id", input.metricId);
 
   if (updateError) {
-    throw new Error(updateError.message);
+    throw new Error("Nao foi possivel concluir a analise da metrica.");
   }
 
   await serviceClient.from("metric_reviews").insert({
@@ -275,14 +346,11 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
   });
 
   await serviceClient.from("creator_notices").insert({
-    title:
-      input.decision === "approved"
-        ? "Métrica aprovada"
-        : "Métrica negada",
+    title: input.decision === "approved" ? "Metrica aprovada" : "Metrica negada",
     message:
       input.decision === "approved"
-        ? reviewReason || "Sua métrica foi aprovada com sucesso."
-        : reviewReason || "Sua métrica foi negada. Confira o motivo no painel.",
+        ? reviewReason || "Metrica aprovada. Continue representando o Coliseu!"
+        : reviewReason || "Metrica negada. Verifique o motivo informado pela equipe.",
     type: input.decision === "approved" ? "success" : "warning",
     target_type: "individual",
     target_creator_id: creator.id,
@@ -302,7 +370,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
       ? {
           status: "skipped" as const,
           channelId: creator.discord_channel_id,
-          errorMessage: "Envio automático para o Discord está desabilitado.",
+          errorMessage: "O envio automatico de avisos esta desligado.",
         }
       : await sendDiscordChannelMessage(
           creator.discord_channel_id,
@@ -325,9 +393,10 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
   });
 
   revalidatePath("/metrics");
-  revalidatePath(`/creators/${creator.id}`);
+  revalidatePath(`/central/creators/${creator.id}`);
   revalidatePath("/dashboard");
   revalidatePath("/notices");
+  revalidatePath("/room");
 
   return {
     metricId: input.metricId,
@@ -356,7 +425,7 @@ async function getCreatorChannel(
 
 export async function createNotice(actor: SessionContext, input: NoticeInput) {
   if (!actor.profile) {
-    throw new Error("Perfil não encontrado.");
+    throw new Error("Perfil nao encontrado.");
   }
 
   if (actor.mockMode) {
@@ -369,7 +438,7 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
   const serviceClient = createSupabaseServiceRoleClient();
 
   if (!serviceClient) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada.");
+    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
   }
 
   const { error: noticeError } = await serviceClient.from("creator_notices").insert({
@@ -384,7 +453,7 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
   });
 
   if (noticeError) {
-    throw new Error(noticeError.message);
+    throw new Error("Nao foi possivel enviar o aviso.");
   }
 
   let discordStatus: "sent" | "failed" | "skipped" | null = null;
@@ -411,7 +480,7 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
         ? {
             status: "skipped" as const,
             channelId,
-            errorMessage: "Envio automático para o Discord está desabilitado.",
+            errorMessage: "O envio automatico de avisos esta desligado.",
           }
         : await sendDiscordChannelMessage(
             channelId,
@@ -448,14 +517,14 @@ export async function sendManualDiscordMessage(
   if (actor.mockMode) {
     return {
       status: "skipped",
-      errorMessage: "Modo demo ativo: nenhuma mensagem real foi enviada.",
+      errorMessage: "Demonstracao ativa: nenhuma mensagem real foi enviada.",
     };
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
 
   if (!serviceClient) {
-    throw new Error("SUPABASE_SERVICE_ROLE_KEY não configurada.");
+    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
   }
 
   let channelId = input.channelId ?? null;

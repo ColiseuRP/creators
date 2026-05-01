@@ -13,9 +13,8 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "Creators Hub",
-  description:
-    "Painel operacional para creators com Supabase Auth, Storage privado, reviews e integração segura com Discord.",
+  title: "Creators Coliseu",
+  description: "O espaco oficial dos criadores de conteudo do Coliseu RP.",
 };
 
 export default function RootLayout({

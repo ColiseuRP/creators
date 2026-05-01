@@ -162,6 +162,7 @@ export interface DashboardSnapshot {
   creatorsCount: number;
   pendingMetricsCount: number;
   approvedMetricsCount: number;
+  rejectedMetricsCount: number;
   pendingApplicationsCount: number;
   noticesCount: number;
   recentMetrics: MetricSubmission[];

@@ -38,7 +38,7 @@ export async function signInAction(formData: FormData) {
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    redirect("/login?error=Supabase%20não%20configurado");
+    redirect("/login?error=Acesso%20indisponivel%20no%20momento");
   }
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -47,7 +47,7 @@ export async function signInAction(formData: FormData) {
   });
 
   if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+    redirect("/login?error=Nao%20foi%20possivel%20entrar%20com%20esse%20acesso");
   }
 
   redirect("/dashboard");
@@ -76,7 +76,7 @@ export async function switchDemoRoleAction(formData: FormData) {
   const role = getRoleFromFormData(formData);
 
   if (!role) {
-    redirect("/login?error=Perfil%20demo%20inválido");
+    redirect("/login?error=Perfil%20de%20demonstracao%20invalido");
   }
 
   await setMockRole(role);

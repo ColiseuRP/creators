@@ -7,27 +7,39 @@ import { getMetrics } from "@/lib/data";
 import { requireSession } from "@/lib/session";
 import { formatDate, formatDuration, formatNumber } from "@/lib/utils";
 
+function getMetricMessage(status: "pending" | "approved" | "rejected") {
+  switch (status) {
+    case "approved":
+      return "Metrica aprovada. Continue representando o Coliseu!";
+    case "rejected":
+      return "Metrica negada. Verifique o motivo informado pela equipe.";
+    default:
+      return "Sua metrica esta em analise pela equipe.";
+  }
+}
+
 export default async function MetricsPage() {
   const actor = await requireSession();
   const metrics = await getMetrics(actor);
 
   return (
     <SectionCard
-      title="Métricas"
-      description="Histórico completo de submissões, anexos, observações e análises."
+      title="Metricas"
+      description={
+        actor.role === "creator"
+          ? "Aqui voce acompanha o historico das suas entregas, os prints enviados e os retornos da equipe."
+          : "A equipe acompanha o historico de metricas, confere os anexos e registra cada decisao da central."
+      }
     >
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-[var(--muted)]">
           {actor.role === "creator"
-            ? "Você enxerga apenas as próprias métricas e respectivos anexos."
-            : "Seu papel permite revisar métricas, aprovar ou negar e disparar avisos automaticamente."}
+            ? "Voce enxerga apenas as proprias metricas, seus prints e os avisos ligados ao seu caminho."
+            : "Seu papel permite revisar metricas, aprovar ou negar envios e registrar retorno para cada creator."}
         </p>
         {actor.role === "creator" ? (
-          <Link
-            href="/metrics/new"
-            className="rounded-full bg-[var(--accent)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
-          >
-            Nova métrica
+          <Link href="/metrics/new" className="button-gold">
+            Enviar Nova Metrica
           </Link>
         ) : null}
       </div>
@@ -36,47 +48,55 @@ export default async function MetricsPage() {
         {metrics.map((metric) => (
           <article
             key={metric.id}
-            className="rounded-[28px] border border-[rgba(19,32,45,0.08)] bg-white/88 p-5"
+            className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5"
           >
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-3">
-                  <p className="font-display text-2xl font-semibold tracking-tight text-[var(--foreground)]">
-                    {metric.creator?.name ?? "Creator"} · {metric.platform}
+                  <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
+                    {metric.creator?.name ?? "Creator"} / {metric.platform}
                   </p>
                   <StatusBadge status={metric.status} />
                 </div>
                 <p className="mt-2 text-sm text-[var(--muted)]">
-                  {metric.content_type} · {formatDate(metric.content_date, { dateStyle: "medium" })} · {formatNumber(metric.views)} views
+                  {metric.content_type} /{" "}
+                  {formatDate(metric.content_date, { dateStyle: "medium" })} /{" "}
+                  {formatNumber(metric.views)} views
                 </p>
                 <a
                   href={metric.content_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-3 inline-flex text-sm font-semibold text-[var(--accent-strong)] hover:text-[var(--accent)]"
+                  className="mt-3 inline-flex text-sm font-semibold text-[var(--gold)] hover:text-[var(--white)]"
                 >
-                  Abrir conteúdo
+                  Abrir conteudo
                 </a>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
-                <div className="rounded-2xl bg-[rgba(18,145,125,0.08)] px-4 py-3 text-sm">
+                <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(245,197,66,0.08)] px-4 py-3 text-sm text-[var(--muted)]">
                   Likes: {formatNumber(metric.likes)}
                 </div>
-                <div className="rounded-2xl bg-[rgba(20,33,43,0.06)] px-4 py-3 text-sm">
-                  Comentários: {formatNumber(metric.comments)}
+                <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
+                  Comentarios: {formatNumber(metric.comments)}
                 </div>
-                <div className="rounded-2xl bg-[rgba(20,33,43,0.06)] px-4 py-3 text-sm">
+                <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
                   Compart.: {formatNumber(metric.shares)}
                 </div>
-                <div className="rounded-2xl bg-[rgba(20,33,43,0.06)] px-4 py-3 text-sm">
+                <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
                   Live: {formatDuration(metric.live_duration)}
                 </div>
               </div>
             </div>
 
+            {actor.role === "creator" ? (
+              <div className="mt-4 rounded-[24px] border border-[rgba(245,197,66,0.14)] bg-[rgba(245,197,66,0.08)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
+                {getMetricMessage(metric.status)}
+              </div>
+            ) : null}
+
             {metric.creator_observation ? (
-              <div className="mt-4 rounded-[24px] bg-[rgba(255,250,242,0.85)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
-                <span className="font-semibold text-[var(--foreground)]">Observação do creator:</span>{" "}
+              <div className="mt-4 rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.02)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
+                <span className="font-semibold text-[var(--white)]">Observacao do creator:</span>{" "}
                 {metric.creator_observation}
               </div>
             ) : null}
@@ -89,7 +109,7 @@ export default async function MetricsPage() {
                     href={attachment.signed_url ?? "#"}
                     target="_blank"
                     rel="noreferrer"
-                    className="overflow-hidden rounded-[24px] border border-[rgba(19,32,45,0.08)] bg-[rgba(255,255,255,0.82)]"
+                    className="overflow-hidden rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)]"
                   >
                     {attachment.signed_url ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -99,12 +119,12 @@ export default async function MetricsPage() {
                         className="h-44 w-full object-cover"
                       />
                     ) : (
-                      <div className="flex h-44 items-center justify-center bg-[rgba(20,33,43,0.06)] text-sm text-[var(--muted)]">
-                        Visual indisponível
+                      <div className="flex h-44 items-center justify-center bg-[rgba(255,255,255,0.03)] text-sm text-[var(--muted)]">
+                        Visual indisponivel
                       </div>
                     )}
                     <div className="p-4">
-                      <p className="truncate text-sm font-semibold text-[var(--foreground)]">
+                      <p className="truncate text-sm font-semibold text-[var(--white)]">
                         {attachment.file_name}
                       </p>
                     </div>
@@ -114,8 +134,8 @@ export default async function MetricsPage() {
             ) : null}
 
             {metric.review?.reason || metric.admin_observation || metric.rejection_reason ? (
-              <div className="mt-4 rounded-[24px] bg-[rgba(20,33,43,0.06)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
-                <span className="font-semibold text-[var(--foreground)]">Última análise:</span>{" "}
+              <div className="mt-4 rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.02)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
+                <span className="font-semibold text-[var(--white)]">Retorno da equipe:</span>{" "}
                 {metric.review?.reason ||
                   metric.admin_observation ||
                   metric.rejection_reason}
@@ -129,6 +149,12 @@ export default async function MetricsPage() {
             ) : null}
           </article>
         ))}
+
+        {metrics.length === 0 ? (
+          <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
+            Nenhuma metrica foi registrada por aqui ainda.
+          </div>
+        ) : null}
       </div>
     </SectionCard>
   );

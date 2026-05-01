@@ -17,15 +17,15 @@ export function formatMetricReviewDiscordMessage(
 ) {
   const headline =
     decision === "approved"
-      ? `A métrica de ${metric.platform} foi aprovada.`
-      : `A métrica de ${metric.platform} foi negada.`;
+      ? `Metrica aprovada. Continue representando o Coliseu!`
+      : `Metrica negada. Confira a orientacao da equipe para reenviar.`;
 
-  const reasonLine = reason ? `\nObservação: ${reason}` : "";
+  const reasonLine = reason ? `\nMotivo informado pela equipe: ${reason}` : "";
 
   return [
-    `Olá, ${creator.name}!`,
+    `Ola, ${creator.name}!`,
     headline,
-    `Conteúdo: ${metric.content_type} em ${metric.content_date}.`,
+    `Conteudo analisado: ${metric.content_type} em ${metric.platform}.`,
     reasonLine,
   ]
     .join("\n")
@@ -38,9 +38,9 @@ export function formatNoticeDiscordMessage(
   type: NoticeType,
 ) {
   const prefixMap: Record<NoticeType, string> = {
-    info: "[Aviso]",
-    success: "[Atualização]",
-    warning: "[Atenção]",
+    info: "[Aviso Coliseu]",
+    success: "[Atualizacao Coliseu]",
+    warning: "[Atencao Coliseu]",
   };
 
   return `${prefixMap[type]} ${title}\n${message}`;
@@ -54,7 +54,7 @@ export async function sendDiscordChannelMessage(
     return {
       status: "skipped",
       channelId: null,
-      errorMessage: "Canal do Discord não configurado para o alvo informado.",
+      errorMessage: "Sala do Discord nao configurada para este destino.",
     };
   }
 
@@ -62,7 +62,7 @@ export async function sendDiscordChannelMessage(
     return {
       status: "skipped",
       channelId,
-      errorMessage: "Integração com Discord não configurada no ambiente.",
+      errorMessage: "A integracao com o Discord ainda nao esta pronta neste ambiente.",
     };
   }
 
@@ -83,7 +83,7 @@ export async function sendDiscordChannelMessage(
     return {
       status: "failed",
       channelId,
-      errorMessage: body.slice(0, 500) || "Discord retornou erro sem detalhes.",
+      errorMessage: body.slice(0, 500) || "O Discord retornou um erro sem detalhes.",
     };
   }
 

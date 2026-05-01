@@ -7,8 +7,8 @@ export default async function NewMetricPage() {
 
   return (
     <SectionCard
-      title="Enviar métrica"
-      description="Registre uma nova entrega com evidências anexadas no Supabase Storage."
+      title="Enviar metrica"
+      description="Envie os prints e as informacoes do seu conteudo para analise da equipe responsavel."
     >
       <MetricSubmissionForm creatorName={actor.creator?.name ?? "creator"} />
     </SectionCard>

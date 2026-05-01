@@ -12,23 +12,23 @@ export default async function RoomPage() {
   if (actor.role === "creator" && roomView && !Array.isArray(roomView)) {
     return (
       <SectionCard
-        title={roomView.room?.title ?? "Minha sala"}
-        description="Seu espaço individual com contexto, Discord e regras de operação."
+        title="Sala do Creator"
+        description="Seu espaco oficial para acompanhar sua identidade na cidade, sua situacao atual e os detalhes da sua sala."
       >
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="rounded-[24px] bg-white p-5">
+          <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
             <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
-              Creator
+              Resumo do creator
             </p>
-            <p className="mt-3 font-display text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+            <p className="mt-3 font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
               {roomView.name}
             </p>
             <p className="mt-2 text-sm text-[var(--muted)]">
-              {roomView.city_name} · {roomView.category}
+              {roomView.city_name} / {roomView.category}
             </p>
           </div>
 
-          <div className="rounded-[24px] bg-white p-5">
+          <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
             <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
               Status
             </p>
@@ -37,26 +37,25 @@ export default async function RoomPage() {
             </div>
           </div>
 
-          <div className="rounded-[24px] bg-white p-5">
+          <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
             <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
-              Canal Discord
+              Sala no Discord
             </p>
-            <p className="mt-3 break-all text-sm font-semibold text-[var(--foreground)]">
-              {roomView.discord_channel_id || "Ainda não configurado"}
+            <p className="mt-3 break-all text-sm font-semibold text-[var(--white)]">
+              {roomView.discord_channel_id || "Ainda nao configurado"}
             </p>
           </div>
         </div>
 
-        <div className="mt-6 rounded-[28px] border border-[rgba(19,32,45,0.08)] bg-[rgba(18,145,125,0.08)] p-5">
-          <p className="font-semibold text-[var(--foreground)]">Descrição da sala</p>
-          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            {roomView.room?.description || "Nenhuma descrição registrada para sua sala."}
+        <div className="mt-6 rounded-[28px] border border-[rgba(245,197,66,0.14)] bg-[rgba(245,197,66,0.08)] p-5">
+          <p className="font-semibold text-[var(--white)]">
+            {roomView.room?.title ?? "Sua sala na arena"}
           </p>
-          <Link
-            href="/metrics/new"
-            className="mt-5 inline-flex rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent)]"
-          >
-            Enviar nova métrica
+          <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+            {roomView.room?.description || "Nenhuma descricao foi registrada para sua sala ainda."}
+          </p>
+          <Link href="/metrics/new" className="button-gold mt-5">
+            Enviar Nova Metrica
           </Link>
         </div>
       </SectionCard>
@@ -68,16 +67,16 @@ export default async function RoomPage() {
   return (
     <SectionCard
       title="Salas dos creators"
-      description="Visão consolidada das salas individuais existentes no ecossistema."
+      description="Leitura consolidada das salas individuais que hoje fazem parte da estrutura oficial da cidade."
     >
       <div className="grid gap-4 lg:grid-cols-2">
         {rooms.map((creator) => (
           <article
             key={creator.id}
-            className="rounded-[28px] border border-[rgba(19,32,45,0.08)] bg-white/88 p-5"
+            className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5"
           >
             <div className="flex items-center justify-between gap-3">
-              <p className="font-display text-2xl font-semibold tracking-tight text-[var(--foreground)]">
+              <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
                 {creator.room?.title ?? creator.name}
               </p>
               <StatusBadge status={creator.status} />
@@ -88,6 +87,12 @@ export default async function RoomPage() {
           </article>
         ))}
       </div>
+
+      {rooms.length === 0 ? (
+        <div className="mt-4 rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
+          Nenhuma sala foi registrada ainda.
+        </div>
+      ) : null}
     </SectionCard>
   );
 }

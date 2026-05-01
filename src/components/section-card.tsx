@@ -16,18 +16,14 @@ export function SectionCard({
   className,
 }: SectionCardProps) {
   return (
-    <section
-      className={cn(
-        "rounded-[28px] border border-[rgba(19,32,45,0.08)] bg-[var(--surface)]/95 p-6 shadow-[0_20px_60px_rgba(19,32,45,0.08)] backdrop-blur",
-        className,
-      )}
-    >
-      <div className="mb-5 flex flex-col gap-1">
-        <h2 className="font-display text-xl font-semibold tracking-tight text-[var(--foreground)]">
+    <section className={cn("surface-card gold-frame p-6 lg:p-7", className)}>
+      <div className="mb-5 flex flex-col gap-2">
+        <p className="eyebrow">Creators Coliseu</p>
+        <h2 className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
           {title}
         </h2>
         {description ? (
-          <p className="max-w-2xl text-sm text-[var(--muted)]">{description}</p>
+          <p className="max-w-3xl text-sm leading-7 text-[var(--muted)]">{description}</p>
         ) : null}
       </div>
       {children}

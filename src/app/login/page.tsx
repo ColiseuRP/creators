@@ -1,7 +1,9 @@
-import { ShieldCheck, UploadCloud, Workflow } from "lucide-react";
+import Link from "next/link";
+import { Crown, Shield, Swords } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { signInAction } from "@/app/actions/auth";
+import { ColiseuLogo } from "@/components/coliseu-logo";
 import { isMockMode } from "@/lib/env";
 import { getSessionContext } from "@/lib/session";
 
@@ -24,61 +26,61 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div className="mx-auto flex min-h-screen w-full max-w-[1520px] flex-col justify-center gap-10 px-4 py-10 lg:flex-row lg:items-stretch lg:px-6">
-      <section className="flex flex-1 flex-col justify-between rounded-[36px] border border-[rgba(19,32,45,0.08)] bg-[rgba(19,32,45,0.95)] p-8 text-white shadow-[0_30px_100px_rgba(19,32,45,0.25)]">
+      <section className="surface-card-strong flex flex-1 flex-col justify-between p-8 lg:p-10">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-white/58">
-            Creators Hub
-          </p>
-          <h1 className="mt-5 max-w-xl font-display text-5xl font-semibold tracking-tight">
-            Governança de creators com Supabase seguro e fluxo pronto para Vercel.
+          <ColiseuLogo priorityLabel="A arena oficial dos creators" />
+          <p className="eyebrow mt-8">Acesso oficial</p>
+          <h1 className="mt-5 max-w-xl font-display text-5xl font-semibold tracking-tight text-[var(--white)]">
+            Acesso Creators Coliseu
           </h1>
-          <p className="mt-6 max-w-2xl text-lg leading-8 text-white/72">
-            O projeto já nasce com autenticação, RLS, storage privado para prints, logs de Discord e APIs protegidas para reviews e avisos.
+          <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
+            Entre para acessar sua sala, enviar metricas e acompanhar seus avisos.
           </p>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <article className="rounded-[28px] border border-white/10 bg-white/6 p-5">
-            <ShieldCheck className="h-6 w-6 text-[#9be6d8]" />
-            <p className="mt-4 font-semibold">Auth + RLS</p>
-            <p className="mt-2 text-sm leading-6 text-white/68">
-              Perfis por papel e acesso isolado por creator.
+          <article className="surface-card p-5">
+            <Shield className="h-6 w-6 text-[var(--gold)]" />
+            <p className="mt-4 font-semibold text-[var(--white)]">Sala do Creator</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+              Acompanhe sua jornada, seus avisos e o historico das suas entregas.
             </p>
           </article>
-          <article className="rounded-[28px] border border-white/10 bg-white/6 p-5">
-            <UploadCloud className="h-6 w-6 text-[#ffd89c]" />
-            <p className="mt-4 font-semibold">Storage privado</p>
-            <p className="mt-2 text-sm leading-6 text-white/68">
-              Upload seguro com preview e regras por pasta.
+          <article className="surface-card p-5">
+            <Swords className="h-6 w-6 text-[var(--gold)]" />
+            <p className="mt-4 font-semibold text-[var(--white)]">Central da equipe</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+              Analise entregas, envie avisos e mantenha a operacao alinhada.
             </p>
           </article>
-          <article className="rounded-[28px] border border-white/10 bg-white/6 p-5">
-            <Workflow className="h-6 w-6 text-[#ffa970]" />
-            <p className="mt-4 font-semibold">Backend first</p>
-            <p className="mt-2 text-sm leading-6 text-white/68">
-              Discord, service role e aprovações sempre no servidor.
+          <article className="surface-card p-5">
+            <Crown className="h-6 w-6 text-[var(--gold)]" />
+            <p className="mt-4 font-semibold text-[var(--white)]">Representacao oficial</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
+              Um ambiente forte, serio e alinhado com a identidade do Coliseu RP.
             </p>
           </article>
         </div>
       </section>
 
-      <section className="w-full max-w-[520px] rounded-[36px] border border-[rgba(19,32,45,0.08)] bg-[var(--surface)]/92 p-8 shadow-[0_28px_90px_rgba(19,32,45,0.14)] backdrop-blur">
+      <section className="surface-card gold-frame w-full max-w-[520px] p-8">
         <div className="mb-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--muted)]">
-            Acesso ao painel
-          </p>
-          <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight text-[var(--foreground)]">
-            Entrar no ambiente
+          <p className="eyebrow">Entrada da arena</p>
+          <h2 className="mt-4 font-display text-3xl font-semibold tracking-tight text-[var(--white)]">
+            Entrar no sistema
           </h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             {isMockMode
-              ? "Sem credenciais do Supabase no ambiente, o projeto entra automaticamente em modo demo para desenvolvimento."
-              : "Use a conta cadastrada no Supabase Auth. O papel é resolvido pelo perfil salvo na tabela profiles."}
+              ? "Escolha um perfil de demonstracao para visualizar os acessos da operacao."
+              : "Use seu acesso para entrar na sua sala ou na central da equipe."}
           </p>
+          <Link href="/" className="mt-5 inline-flex text-sm font-semibold text-[var(--gold)] hover:text-[var(--white)]">
+            Voltar para o inicio
+          </Link>
         </div>
 
         {error ? (
-          <div className="mb-6 rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-700">
+          <div className="mb-6 rounded-2xl border border-[rgba(139,30,30,0.45)] bg-[rgba(139,30,30,0.2)] px-4 py-3 text-sm text-[#ffd0d0]">
             {error}
           </div>
         ) : null}
@@ -89,26 +91,26 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               {
                 role: "admin_general",
                 label: "Entrar como Admin Geral",
-                description: "Acesso completo a creators, aprovações, avisos e Discord.",
+                description: "Acesso completo a creators, analises, avisos e historico.",
               },
               {
                 role: "responsavel_creators",
-                label: "Entrar como Responsável Creators",
-                description: "Gestão de creators, métricas, avisos e reviews.",
+                label: "Entrar como Responsavel Creators",
+                description: "Gestao de creators, metricas, avisos e revisoes.",
               },
               {
                 role: "creator",
                 label: "Entrar como Creator",
-                description: "Acesso apenas à sala própria, métricas e histórico.",
+                description: "Acesso a propria sala, metricas e avisos recebidos.",
               },
             ].map((option) => (
               <form
                 key={option.role}
                 action={signInAction}
-                className="rounded-[28px] border border-[rgba(19,32,45,0.08)] bg-white p-5"
+                className="surface-card p-5"
               >
                 <input type="hidden" name="role" value={option.role} />
-                <p className="font-display text-xl font-semibold tracking-tight text-[var(--foreground)]">
+                <p className="font-display text-xl font-semibold tracking-tight text-[var(--white)]">
                   {option.label}
                 </p>
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
@@ -116,41 +118,38 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 </p>
                 <button
                   type="submit"
-                  className="mt-5 rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent)]"
+                  className="button-gold mt-5"
                 >
-                  Abrir demonstração
+                  Entrar na demonstracao
                 </button>
               </form>
             ))}
           </div>
         ) : (
           <form action={signInAction} className="space-y-4">
-            <label className="block space-y-2 text-sm font-medium text-[var(--foreground)]">
+            <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
               <span>Email</span>
               <input
                 name="email"
                 type="email"
                 required
-                placeholder="voce@empresa.com"
-                className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+                placeholder="voce@email.com"
+                className="field-input"
               />
             </label>
 
-            <label className="block space-y-2 text-sm font-medium text-[var(--foreground)]">
+            <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
               <span>Senha</span>
               <input
                 name="password"
                 type="password"
                 required
                 placeholder="Sua senha"
-                className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+                className="field-input"
               />
             </label>
 
-            <button
-              type="submit"
-              className="mt-2 inline-flex rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)]"
-            >
+            <button type="submit" className="button-gold mt-2">
               Entrar
             </button>
           </form>

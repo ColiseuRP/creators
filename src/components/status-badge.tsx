@@ -9,42 +9,48 @@ import { cn } from "@/lib/utils";
 type BadgeStatus = CreatorStatus | MetricStatus | DiscordLogStatus | NoticeType;
 
 const styles: Record<BadgeStatus, string> = {
-  active: "bg-emerald-100 text-emerald-800",
-  pending: "bg-amber-100 text-amber-800",
-  paused: "bg-slate-200 text-slate-700",
-  approved: "bg-emerald-100 text-emerald-800",
-  rejected: "bg-rose-100 text-rose-800",
-  sent: "bg-emerald-100 text-emerald-800",
-  failed: "bg-rose-100 text-rose-800",
-  skipped: "bg-slate-200 text-slate-700",
-  info: "bg-sky-100 text-sky-800",
-  success: "bg-emerald-100 text-emerald-800",
-  warning: "bg-amber-100 text-amber-800",
+  active: "border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] text-[#d7ffe8]",
+  pending: "border-[rgba(245,197,66,0.35)] bg-[rgba(245,197,66,0.12)] text-[var(--gold)]",
+  paused: "border-[rgba(214,214,214,0.2)] bg-[rgba(214,214,214,0.08)] text-[var(--muted)]",
+  approved: "border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] text-[#d7ffe8]",
+  rejected: "border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] text-[#ffd0d0]",
+  sent: "border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] text-[#d7ffe8]",
+  failed: "border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] text-[#ffd0d0]",
+  skipped: "border-[rgba(214,214,214,0.2)] bg-[rgba(214,214,214,0.08)] text-[var(--muted)]",
+  info: "border-[rgba(245,197,66,0.35)] bg-[rgba(245,197,66,0.12)] text-[var(--gold)]",
+  success: "border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] text-[#d7ffe8]",
+  warning: "border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] text-[#ffd0d0]",
 };
 
-export function StatusBadge({ status }: { status: BadgeStatus }) {
-  const labels: Record<BadgeStatus, string> = {
-    active: "Ativo",
-    pending: "Pendente",
-    paused: "Pausado",
-    approved: "Aprovado",
-    rejected: "Negado",
-    sent: "Enviado",
-    failed: "Falhou",
-    skipped: "Ignorado",
-    info: "Informativo",
-    success: "Sucesso",
-    warning: "Atenção",
-  };
+const labels: Record<BadgeStatus, string> = {
+  active: "Ativo",
+  pending: "Em analise",
+  paused: "Pausado",
+  approved: "Aprovada",
+  rejected: "Negada",
+  sent: "Enviado",
+  failed: "Falhou",
+  skipped: "Nao enviado",
+  info: "Aviso",
+  success: "Confirmado",
+  warning: "Atencao",
+};
 
+export function StatusBadge({
+  status,
+  label,
+}: {
+  status: BadgeStatus;
+  label?: string;
+}) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold tracking-wide",
+        "inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-wide",
         styles[status],
       )}
     >
-      {labels[status]}
+      {label ?? labels[status]}
     </span>
   );
 }

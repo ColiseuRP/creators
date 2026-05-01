@@ -72,15 +72,22 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       };
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Não foi possível enviar o aviso.");
+        throw new Error(result.error ?? "Nao foi possivel enviar o aviso.");
       }
+
+      const discordLine =
+        sendToDiscord && targetType === "individual"
+          ? " Aviso enviado para a sala do creator."
+          : sendToDiscord
+            ? " Aviso geral enviado para os creators."
+            : "";
 
       const suffix =
         result.data?.discordStatus && result.data.discordStatus !== "sent"
           ? ` Discord: ${result.data.errorMessage ?? result.data.discordStatus}.`
-          : "";
+          : discordLine;
 
-      setFeedback(`Aviso enviado com sucesso.${suffix}`);
+      setFeedback(`Aviso publicado com sucesso.${suffix}`);
       setTitle("");
       setMessage("");
       setTargetCreatorId("");
@@ -100,14 +107,14 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Destino</span>
           <select
             value={targetType}
             onChange={(event) =>
               setTargetType(event.target.value as "individual" | "general" | "category")
             }
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           >
             <option value="general">Geral</option>
             <option value="category">Categoria</option>
@@ -115,30 +122,30 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
           </select>
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
-          <span>Tipo do aviso</span>
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
+          <span>Tom do aviso</span>
           <select
             value={type}
             onChange={(event) =>
               setType(event.target.value as "info" | "success" | "warning")
             }
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           >
             <option value="info">Informativo</option>
-            <option value="success">Sucesso</option>
-            <option value="warning">Atenção</option>
+            <option value="success">Destaque</option>
+            <option value="warning">Atencao</option>
           </select>
         </label>
       </div>
 
       {targetType === "individual" ? (
-        <label className="block space-y-2 text-sm font-medium text-[var(--foreground)]">
+        <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Creator alvo</span>
           <select
             value={targetCreatorId}
             onChange={(event) => setTargetCreatorId(event.target.value)}
             required
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           >
             <option value="">Selecione um creator</option>
             {creators.map((creator) => (
@@ -151,13 +158,13 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       ) : null}
 
       {targetType === "category" ? (
-        <label className="block space-y-2 text-sm font-medium text-[var(--foreground)]">
+        <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Categoria alvo</span>
           <select
             value={targetCategory}
             onChange={(event) => setTargetCategory(event.target.value)}
             required
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           >
             <option value="">Selecione uma categoria</option>
             {categories.map((category) => (
@@ -169,58 +176,54 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
         </label>
       ) : null}
 
-      <label className="block space-y-2 text-sm font-medium text-[var(--foreground)]">
-        <span>Título</span>
+      <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
+        <span>Titulo</span>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           required
-          className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+          className="field-input"
         />
       </label>
 
-      <label className="block space-y-2 text-sm font-medium text-[var(--foreground)]">
+      <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
         <span>Mensagem</span>
         <textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
           rows={4}
           required
-          className="w-full rounded-[24px] border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+          className="field-textarea"
         />
       </label>
 
-      <label className="flex items-center gap-3 rounded-2xl bg-[rgba(18,145,125,0.08)] px-4 py-3 text-sm text-[var(--foreground)]">
+      <label className="flex items-center gap-3 rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
         <input
           type="checkbox"
           checked={sendToDiscord}
           onChange={(event) => setSendToDiscord(event.target.checked)}
-          className="h-4 w-4 rounded border-[rgba(19,32,45,0.18)] text-[var(--accent)]"
+          className="h-4 w-4 rounded border-[rgba(245,197,66,0.22)] text-[var(--gold)]"
         />
-        <span>Enviar também para o Discord</span>
+        <span>Enviar aviso no Discord</span>
       </label>
 
       {feedback ? (
-        <div className="rounded-2xl bg-emerald-100 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-2xl border border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] px-4 py-3 text-sm text-[#d7ffe8]">
           {feedback}
         </div>
       ) : null}
 
       {error ? (
-        <div className="rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-2xl border border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] px-4 py-3 text-sm text-[#ffd0d0]">
           {error}
         </div>
       ) : null}
 
-      <button
-        type="submit"
-        disabled={isLoading}
-        className="inline-flex items-center gap-2 rounded-full bg-[var(--foreground)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent)] disabled:cursor-not-allowed disabled:opacity-70"
-      >
+      <button type="submit" disabled={isLoading} className="button-gold">
         {isLoading ? (
-          <LoaderCircle className="h-4 w-4 animate-spin" />
+          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <Megaphone className="h-4 w-4" />
+          <Megaphone className="mr-2 h-4 w-4" />
         )}
         <span>{isLoading ? "Enviando..." : "Publicar aviso"}</span>
       </button>

@@ -105,10 +105,10 @@ export function MetricSubmissionForm({
       const result = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Não foi possível registrar a métrica.");
+        throw new Error(result.error ?? "Nao foi possivel registrar a metrica.");
       }
 
-      setSuccess("Métrica enviada com sucesso. Atualizando painel...");
+      setSuccess("Metrica enviada com sucesso. A equipe ira analisar em breve.");
       event.currentTarget.reset();
       files.forEach((file) => URL.revokeObjectURL(file.previewUrl));
       setFiles([]);
@@ -121,7 +121,7 @@ export function MetricSubmissionForm({
       const message =
         submitError instanceof Error
           ? submitError.message
-          : "Falha inesperada ao enviar a métrica.";
+          : "Falha inesperada ao enviar a metrica.";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -130,139 +130,116 @@ export function MetricSubmissionForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
+        Envie os prints e informacoes do seu conteudo para analise da equipe
+        responsavel. Quanto mais claro o envio, melhor para o fechamento da sua
+        entrega.
+      </div>
+
       <div className="grid gap-4 md:grid-cols-2">
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Plataforma</span>
           <input
             name="platform"
             required
             placeholder="Twitch, TikTok, YouTube..."
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
-          <span>Tipo de conteúdo</span>
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
+          <span>Tipo de conteudo</span>
           <input
             name="contentType"
             required
-            placeholder="Live, Short, Vídeo..."
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            placeholder="Live, short, video..."
+            className="field-input"
           />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)] md:col-span-2">
-          <span>URL do conteúdo</span>
+        <label className="space-y-2 text-sm font-medium text-[var(--white)] md:col-span-2">
+          <span>URL do conteudo</span>
           <input
             name="contentUrl"
             type="url"
             required
             placeholder="https://..."
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
-          <span>Data do conteúdo</span>
-          <input
-            name="contentDate"
-            type="date"
-            required
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
-          />
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
+          <span>Data do conteudo</span>
+          <input name="contentDate" type="date" required className="field-input" />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Views</span>
-          <input
-            name="views"
-            type="number"
-            min="0"
-            required
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
-          />
+          <input name="views" type="number" min="0" required className="field-input" />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Likes</span>
-          <input
-            name="likes"
-            type="number"
-            min="0"
-            required
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
-          />
+          <input name="likes" type="number" min="0" required className="field-input" />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
-          <span>Comentários</span>
-          <input
-            name="comments"
-            type="number"
-            min="0"
-            required
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
-          />
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
+          <span>Comentarios</span>
+          <input name="comments" type="number" min="0" required className="field-input" />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Compartilhamentos</span>
-          <input
-            name="shares"
-            type="number"
-            min="0"
-            required
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
-          />
+          <input name="shares" type="number" min="0" required className="field-input" />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
-          <span>Média de viewers</span>
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
+          <span>Media de viewers</span>
           <input
             name="averageViewers"
             type="number"
             min="0"
             placeholder="Opcional"
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           />
         </label>
 
-        <label className="space-y-2 text-sm font-medium text-[var(--foreground)]">
-          <span>Duração da live (horas)</span>
+        <label className="space-y-2 text-sm font-medium text-[var(--white)]">
+          <span>Duracao da live (horas)</span>
           <input
             name="liveDuration"
             type="number"
             min="0"
             step="0.1"
             placeholder="Opcional"
-            className="w-full rounded-2xl border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+            className="field-input"
           />
         </label>
       </div>
 
-      <label className="block space-y-2 text-sm font-medium text-[var(--foreground)]">
-        <span>Observação do creator</span>
+      <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
+        <span>Observacao do creator</span>
         <textarea
           name="creatorObservation"
           rows={4}
           placeholder={`Contexto adicional da entrega de ${creatorName}`}
-          className="w-full rounded-[24px] border border-[rgba(19,32,45,0.12)] bg-white px-4 py-3 outline-none transition focus:border-[var(--accent)]"
+          className="field-textarea"
         />
       </label>
 
-      <div className="rounded-[28px] border border-dashed border-[rgba(19,32,45,0.16)] bg-[rgba(255,255,255,0.75)] p-5">
+      <div className="rounded-[28px] border border-dashed border-[rgba(245,197,66,0.22)] bg-[rgba(255,255,255,0.03)] p-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-display text-xl font-semibold tracking-tight text-[var(--foreground)]">
-              Prints das métricas
+            <p className="font-display text-xl font-semibold tracking-tight text-[var(--white)]">
+              Prints das metricas
             </p>
-            <p className="text-sm text-[var(--muted)]">
-              PNG, JPG, JPEG ou WEBP, até {formatNumber(MAX_ATTACHMENT_SIZE_BYTES / 1024 / 1024)}MB por arquivo.
+            <p className="text-sm leading-7 text-[var(--muted)]">
+              PNG, JPG, JPEG ou WEBP, ate {formatNumber(MAX_ATTACHMENT_SIZE_BYTES / 1024 / 1024)}MB por arquivo.
             </p>
           </div>
 
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[var(--foreground)] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent)]">
-            <ImagePlus className="h-4 w-4" />
+          <label className="button-dark cursor-pointer">
+            <ImagePlus className="mr-2 h-4 w-4" />
             <span>Selecionar anexos</span>
             <input
               type="file"
@@ -288,14 +265,14 @@ export function MetricSubmissionForm({
 
         {files.length > 0 ? (
           <div className="mt-5 space-y-4">
-            <div className="rounded-2xl bg-[rgba(18,145,125,0.08)] px-4 py-3 text-sm text-[var(--foreground)]">
+            <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(245,197,66,0.08)] px-4 py-3 text-sm text-[var(--muted)]">
               {files.length} arquivo(s) selecionado(s), total de {formatNumber(Math.round(totalSize / 1024))} KB.
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {files.map((item) => (
                 <article
                   key={`${item.file.name}-${item.file.lastModified}`}
-                  className="overflow-hidden rounded-[24px] border border-[rgba(19,32,45,0.08)] bg-white"
+                  className="overflow-hidden rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)]"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -304,7 +281,7 @@ export function MetricSubmissionForm({
                     className="h-44 w-full object-cover"
                   />
                   <div className="p-4">
-                    <p className="truncate text-sm font-semibold text-[var(--foreground)]">
+                    <p className="truncate text-sm font-semibold text-[var(--white)]">
                       {item.file.name}
                     </p>
                     <p className="mt-1 text-xs text-[var(--muted)]">
@@ -319,13 +296,13 @@ export function MetricSubmissionForm({
       </div>
 
       {error ? (
-        <div className="rounded-2xl bg-rose-100 px-4 py-3 text-sm text-rose-700">
+        <div className="rounded-2xl border border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] px-4 py-3 text-sm text-[#ffd0d0]">
           {error}
         </div>
       ) : null}
 
       {success ? (
-        <div className="rounded-2xl bg-emerald-100 px-4 py-3 text-sm text-emerald-700">
+        <div className="rounded-2xl border border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] px-4 py-3 text-sm text-[#d7ffe8]">
           {success}
         </div>
       ) : null}
@@ -333,14 +310,14 @@ export function MetricSubmissionForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center gap-2 rounded-full bg-[var(--accent)] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-70"
+        className="button-gold"
       >
         {isSubmitting ? (
-          <LoaderCircle className="h-4 w-4 animate-spin" />
+          <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
         ) : (
-          <SendHorizonal className="h-4 w-4" />
+          <SendHorizonal className="mr-2 h-4 w-4" />
         )}
-        <span>{isSubmitting ? "Enviando..." : "Enviar métrica"}</span>
+        <span>{isSubmitting ? "Enviando..." : "Enviar metrica para analise"}</span>
       </button>
     </form>
   );
