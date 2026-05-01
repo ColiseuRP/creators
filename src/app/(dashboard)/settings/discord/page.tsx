@@ -1,4 +1,5 @@
 import { DiscordLogCard } from "@/components/discord-log-card";
+import { TestDiscordButton } from "@/components/forms/test-discord-button";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getDiscordChannelStatusItems } from "@/lib/discord-channels";
@@ -149,6 +150,30 @@ export default async function DiscordSettingsPage() {
                   <p className="mt-2 text-sm font-semibold text-[var(--white)]">
                     {settings?.auto_send_enabled ? "Ativado" : "Desativado"}
                   </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
+              <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
+                Teste de envio
+              </p>
+              <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+                Envie uma mensagem de teste para o canal de avisos configurado e confirme
+                rapidamente se a integração está pronta para uso.
+              </p>
+              <div className="mt-5 rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(18,10,5,0.38)] px-4 py-4">
+                <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
+                  Canal de avisos atual
+                </p>
+                <p className="mt-2 text-sm font-semibold text-[var(--white)]">
+                  {primaryNoticeChannel?.channelId || "Canal de avisos do Discord não configurado."}
+                </p>
+                <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
+                  A mensagem de teste usa o canal dedicado de avisos do programa.
+                </p>
+                <div className="mt-4">
+                  <TestDiscordButton />
                 </div>
               </div>
             </div>

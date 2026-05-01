@@ -12,6 +12,7 @@ import {
   formatNoticeDiscordMessage,
   sendDiscordChannelMessage,
 } from "@/lib/discord";
+import { getDiscordDeliverySchemaCapabilities } from "@/lib/discord-delivery-schema";
 import {
   getDiscordChannelIdForPurpose,
   getDiscordChannelPurposeForMessageType,
@@ -92,6 +93,29 @@ interface PendingDiscordLogInput {
   messageType: string;
 }
 
+interface DiscordLogFinalizeContext extends PendingDiscordLogInput {
+  attemptedAt: string;
+}
+
+interface NoticeWorkflowResult {
+  success: boolean;
+  message: string;
+  noticeId: string;
+  discordStatus: DiscordLogStatus | null;
+  error: string | null;
+  channelId: string | null;
+  discordMessageId: string | null;
+}
+
+interface DiscordWorkflowResult {
+  success: boolean;
+  message: string;
+  discordStatus: DiscordLogStatus;
+  error: string | null;
+  channelId: string | null;
+  discordMessageId: string | null;
+}
+
 type ServiceClient = NonNullable<ReturnType<typeof createSupabaseServiceRoleClient>>;
 
 function requireCreatorContext(actor: SessionContext) {
@@ -104,6 +128,10 @@ function requireCreatorContext(actor: SessionContext) {
 
 function getNowIso() {
   return new Date().toISOString();
+}
+
+function logWorkflowError(message: string, details?: Record<string, unknown>) {
+  console.error(`[workflows] ${message}`, details ?? {});
 }
 
 async function getLatestDiscordSettings(serviceClient: ServiceClient) {
@@ -120,10 +148,18 @@ async function getLatestDiscordSettings(serviceClient: ServiceClient) {
 async function insertPendingDiscordLog(
   serviceClient: ServiceClient,
   input: PendingDiscordLogInput,
+  capabilities: Awaited<ReturnType<typeof getDiscordDeliverySchemaCapabilities>>,
 ) {
   const attemptedAt = getNowIso();
 
-  const { data } = await serviceClient
+  if (!capabilities.logTrackingColumns) {
+    return {
+      log: null,
+      attemptedAt,
+    };
+  }
+
+  const { data, error } = await serviceClient
     .from("discord_message_logs")
     .insert({
       notice_id: input.noticeId ?? null,
@@ -140,6 +176,17 @@ async function insertPendingDiscordLog(
     .select("*")
     .single();
 
+  if (error) {
+    logWorkflowError("Falha ao registrar a tentativa inicial de envio ao Discord.", {
+      message: error.message,
+      code: error.code,
+      targetType: input.targetType,
+      targetCreatorId: input.targetCreatorId ?? null,
+      channelId: input.channelId ?? null,
+      messageType: input.messageType,
+    });
+  }
+
   return {
     log: (data as DiscordMessageLog | null) ?? null,
     attemptedAt,
@@ -154,24 +201,76 @@ async function finalizeDiscordLog(
     status: DiscordLogStatus;
     errorMessage?: string | null;
   },
+  capabilities: Awaited<ReturnType<typeof getDiscordDeliverySchemaCapabilities>>,
+  context: DiscordLogFinalizeContext,
 ) {
-  if (!logId) {
-    return {
-      deliveredAt: input.status === "sent" ? getNowIso() : null,
-    };
-  }
-
   const deliveredAt = input.status === "sent" ? getNowIso() : null;
 
-  await serviceClient
-    .from("discord_message_logs")
-    .update({
-      channel_id: input.channelId,
-      status: input.status,
-      error_message: input.errorMessage ?? null,
+  if (capabilities.logTrackingColumns && logId) {
+    const { error } = await serviceClient
+      .from("discord_message_logs")
+      .update({
+        channel_id: input.channelId,
+        status: input.status,
+        error_message: input.errorMessage ?? null,
+        delivered_at: deliveredAt,
+      })
+      .eq("id", logId);
+
+    if (error) {
+      logWorkflowError("Falha ao atualizar o log detalhado de envio ao Discord.", {
+        message: error.message,
+        code: error.code,
+        logId,
+        channelId: input.channelId,
+        status: input.status,
+      });
+    }
+
+    return { deliveredAt };
+  }
+
+  const legacyStatus = input.status === "pending" ? "skipped" : input.status;
+  const basePayload = {
+    target_type: context.targetType,
+    target_creator_id: context.targetCreatorId ?? null,
+    channel_id: input.channelId,
+    message_type: context.messageType,
+    status: legacyStatus,
+    error_message: input.errorMessage ?? null,
+    sent_at: context.attemptedAt,
+  };
+
+  if (capabilities.logTrackingColumns && !logId) {
+    const { error } = await serviceClient.from("discord_message_logs").insert({
+      ...basePayload,
+      notice_id: context.noticeId ?? null,
+      attempted_at: context.attemptedAt,
       delivered_at: deliveredAt,
-    })
-    .eq("id", logId);
+    });
+
+    if (error) {
+      logWorkflowError("Falha ao criar o log detalhado final de envio ao Discord.", {
+        message: error.message,
+        code: error.code,
+        channelId: input.channelId,
+        status: input.status,
+      });
+    }
+
+    return { deliveredAt };
+  }
+
+  const { error } = await serviceClient.from("discord_message_logs").insert(basePayload);
+
+  if (error) {
+    logWorkflowError("Falha ao registrar o log legado de envio ao Discord.", {
+      message: error.message,
+      code: error.code,
+      channelId: input.channelId,
+      status: input.status,
+    });
+  }
 
   return { deliveredAt };
 }
@@ -186,8 +285,13 @@ async function updateNoticeDiscordState(
     attemptedAt?: string | null;
     sentAt?: string | null;
   },
+  capabilities: Awaited<ReturnType<typeof getDiscordDeliverySchemaCapabilities>>,
 ) {
-  await serviceClient
+  if (!capabilities.noticeStateColumns) {
+    return;
+  }
+
+  const { error } = await serviceClient
     .from("creator_notices")
     .update({
       discord_status: input.status,
@@ -197,6 +301,15 @@ async function updateNoticeDiscordState(
       discord_sent_at: input.sentAt ?? null,
     })
     .eq("id", noticeId);
+
+  if (error) {
+    logWorkflowError("Falha ao atualizar o status do aviso no histórico do Discord.", {
+      message: error.message,
+      code: error.code,
+      noticeId,
+      status: input.status,
+    });
+  }
 }
 
 async function getCreatorChannel(serviceClient: ServiceClient, creatorId: string) {
@@ -236,6 +349,7 @@ async function deliverNoticeToDiscord(
   serviceClient: ServiceClient,
   notice: CreatorNotice,
 ) {
+  const capabilities = await getDiscordDeliverySchemaCapabilities(serviceClient);
   const settings = await getLatestDiscordSettings(serviceClient);
   const { channelId, missingChannelMessage } = await resolveNoticeChannel(
     serviceClient,
@@ -249,17 +363,27 @@ async function deliverNoticeToDiscord(
     targetCreatorId: notice.target_creator_id ?? null,
     channelId,
     messageType,
-  });
+  }, capabilities);
 
   let result:
     | Awaited<ReturnType<typeof sendDiscordChannelMessage>>
-    | { status: "skipped"; channelId: string | null; errorMessage: string | null };
+    | {
+        success: false;
+        status: "skipped";
+        channelId: string | null;
+        errorMessage: string | null;
+        message: string;
+        discordMessageId: null;
+      };
 
   if (settings?.auto_send_enabled === false) {
     result = {
+      success: false,
       status: "skipped",
       channelId,
       errorMessage: "O envio automático de avisos está desativado nas configurações internas.",
+      message: "O aviso foi salvo, mas o envio automático ao Discord está desativado.",
+      discordMessageId: null,
     };
   } else {
     result = await sendDiscordChannelMessage(
@@ -280,6 +404,13 @@ async function deliverNoticeToDiscord(
     channelId: result.channelId,
     status: result.status,
     errorMessage: result.errorMessage,
+  }, capabilities, {
+    noticeId: notice.id,
+    targetType: notice.target_type,
+    targetCreatorId: notice.target_creator_id ?? null,
+    channelId,
+    messageType,
+    attemptedAt,
   });
 
   await updateNoticeDiscordState(serviceClient, notice.id, {
@@ -288,13 +419,89 @@ async function deliverNoticeToDiscord(
     errorMessage: result.errorMessage,
     attemptedAt,
     sentAt: deliveredAt,
-  });
+  }, capabilities);
 
   return {
     ...result,
     attemptedAt,
     sentAt: deliveredAt,
     messageType,
+  };
+}
+
+function buildNoticeWorkflowResult(input: {
+  noticeId: string;
+  sendToDiscord: boolean;
+  discordStatus: DiscordLogStatus | null;
+  error: string | null;
+  channelId: string | null;
+  discordMessageId: string | null;
+}): NoticeWorkflowResult {
+  if (!input.sendToDiscord) {
+    return {
+      success: true,
+      message: "Aviso salvo com sucesso.",
+      noticeId: input.noticeId,
+      discordStatus: null,
+      error: null,
+      channelId: null,
+      discordMessageId: null,
+    };
+  }
+
+  if (input.discordStatus === "sent") {
+    return {
+      success: true,
+      message: "Aviso enviado com sucesso.",
+      noticeId: input.noticeId,
+      discordStatus: input.discordStatus,
+      error: null,
+      channelId: input.channelId,
+      discordMessageId: input.discordMessageId,
+    };
+  }
+
+  return {
+    success: false,
+    message: "O aviso foi salvo, mas não foi enviado ao Discord.",
+    noticeId: input.noticeId,
+    discordStatus: input.discordStatus,
+    error:
+      input.error ??
+      "Não foi possível concluir o envio ao Discord no momento.",
+    channelId: input.channelId,
+    discordMessageId: input.discordMessageId,
+  };
+}
+
+function buildDiscordWorkflowResult(input: {
+  status: DiscordLogStatus;
+  error: string | null;
+  channelId: string | null;
+  discordMessageId: string | null;
+  successMessage: string;
+  failureMessage: string;
+}): DiscordWorkflowResult {
+  if (input.status === "sent") {
+    return {
+      success: true,
+      message: input.successMessage,
+      discordStatus: input.status,
+      error: null,
+      channelId: input.channelId,
+      discordMessageId: input.discordMessageId,
+    };
+  }
+
+  return {
+    success: false,
+    message: input.failureMessage,
+    discordStatus: input.status,
+    error:
+      input.error ??
+      "Não foi possível concluir o envio ao Discord no momento.",
+    channelId: input.channelId,
+    discordMessageId: input.discordMessageId,
   };
 }
 
@@ -553,20 +760,29 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     send_to_discord: false,
   });
 
+  const capabilities = await getDiscordDeliverySchemaCapabilities(serviceClient);
   const settings = await getLatestDiscordSettings(serviceClient);
-  const { log } = await insertPendingDiscordLog(serviceClient, {
-    targetType: "metric_review",
-    targetCreatorId: creator.id,
-    channelId: creator.discord_channel_id,
-    messageType:
-      input.decision === "approved" ? "metric_approved" : "metric_rejected",
-  });
+  const messageType =
+    input.decision === "approved" ? "metric_approved" : "metric_rejected";
+  const { log, attemptedAt } = await insertPendingDiscordLog(
+    serviceClient,
+    {
+      targetType: "metric_review",
+      targetCreatorId: creator.id,
+      channelId: creator.discord_channel_id,
+      messageType,
+    },
+    capabilities,
+  );
 
   const discordResult =
     settings?.auto_send_enabled === false
       ? {
+          success: false,
           status: "skipped" as const,
           channelId: creator.discord_channel_id,
+          message: "A métrica foi analisada, mas o envio automático ao Discord está desativado.",
+          discordMessageId: null,
           errorMessage: "O envio automático de avisos está desativado nas configurações internas.",
         }
       : await sendDiscordChannelMessage(
@@ -583,11 +799,23 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
           },
         );
 
-  await finalizeDiscordLog(serviceClient, log?.id, {
-    channelId: discordResult.channelId,
-    status: discordResult.status,
-    errorMessage: discordResult.errorMessage,
-  });
+  await finalizeDiscordLog(
+    serviceClient,
+    log?.id,
+    {
+      channelId: discordResult.channelId,
+      status: discordResult.status,
+      errorMessage: discordResult.errorMessage,
+    },
+    capabilities,
+    {
+      targetType: "metric_review",
+      targetCreatorId: creator.id,
+      channelId: creator.discord_channel_id,
+      messageType,
+      attemptedAt,
+    },
+  );
 
   revalidatePath("/metrics");
   revalidatePath(`/central/creators/${creator.id}`);
@@ -610,11 +838,16 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
   }
 
   if (actor.mockMode) {
-    return {
-      status: "created",
-      discordStatus: input.sendToDiscord ? "skipped" : null,
+    return buildNoticeWorkflowResult({
       noticeId: `mock-notice-${Date.now()}`,
-    };
+      sendToDiscord: input.sendToDiscord,
+      discordStatus: input.sendToDiscord ? "skipped" : null,
+      error: input.sendToDiscord
+        ? "Demonstração ativa: nenhum envio real foi executado."
+        : null,
+      channelId: null,
+      discordMessageId: null,
+    });
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
@@ -623,32 +856,49 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
     throw new Error("A configuração interna ainda não está pronta para esta ação.");
   }
 
+  const capabilities = await getDiscordDeliverySchemaCapabilities(serviceClient);
+  const noticeInsertPayload = {
+    title: input.title,
+    message: input.message,
+    type: input.type,
+    target_type: input.targetType,
+    target_creator_id: input.targetCreatorId ?? null,
+    target_category: input.targetCategory ?? null,
+    sent_by: actor.profile.id,
+    send_to_discord: input.sendToDiscord,
+  };
+
   const { data: notice, error: noticeError } = await serviceClient
     .from("creator_notices")
-    .insert({
-      title: input.title,
-      message: input.message,
-      type: input.type,
-      target_type: input.targetType,
-      target_creator_id: input.targetCreatorId ?? null,
-      target_category: input.targetCategory ?? null,
-      sent_by: actor.profile.id,
-      send_to_discord: input.sendToDiscord,
-      discord_status: input.sendToDiscord ? "pending" : null,
-      discord_channel_id: null,
-      discord_error_message: null,
-      discord_last_attempt_at: null,
-      discord_sent_at: null,
-    })
+    .insert(
+      capabilities.noticeStateColumns
+        ? {
+            ...noticeInsertPayload,
+            discord_status: input.sendToDiscord ? "pending" : null,
+            discord_channel_id: null,
+            discord_error_message: null,
+            discord_last_attempt_at: null,
+            discord_sent_at: null,
+          }
+        : noticeInsertPayload,
+    )
     .select("*")
     .single();
 
   if (noticeError || !notice) {
-    throw new Error("Não foi possível enviar o aviso.");
+    logWorkflowError("Falha ao salvar o aviso antes do envio ao Discord.", {
+      message: noticeError?.message ?? null,
+      code: noticeError?.code ?? null,
+      targetType: input.targetType,
+      sendToDiscord: input.sendToDiscord,
+    });
+    throw new Error("Não foi possível salvar o aviso no momento.");
   }
 
   let discordStatus: "sent" | "failed" | "skipped" | null = null;
   let errorMessage: string | null = null;
+  let channelId: string | null = null;
+  let discordMessageId: string | null = null;
 
   if (input.sendToDiscord) {
     const discordResult = await deliverNoticeToDiscord(
@@ -658,6 +908,8 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
 
     discordStatus = discordResult.status;
     errorMessage = discordResult.errorMessage;
+    channelId = discordResult.channelId;
+    discordMessageId = discordResult.discordMessageId;
   }
 
   revalidatePath("/notices");
@@ -668,12 +920,14 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
     revalidatePath(`/central/creators/${input.targetCreatorId}`);
   }
 
-  return {
-    status: "created",
-    discordStatus,
-    errorMessage,
+  return buildNoticeWorkflowResult({
     noticeId: notice.id,
-  };
+    sendToDiscord: input.sendToDiscord,
+    discordStatus,
+    error: errorMessage,
+    channelId,
+    discordMessageId,
+  });
 }
 
 export async function resendNoticeToDiscord(actor: SessionContext, noticeId: string) {
@@ -682,11 +936,14 @@ export async function resendNoticeToDiscord(actor: SessionContext, noticeId: str
   }
 
   if (actor.mockMode) {
-    return {
+    return buildNoticeWorkflowResult({
       noticeId,
+      sendToDiscord: true,
       discordStatus: "skipped",
-      errorMessage: "Demonstração ativa: nenhum envio real foi executado.",
-    };
+      error: "Demonstração ativa: nenhum envio real foi executado.",
+      channelId: null,
+      discordMessageId: null,
+    });
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
@@ -728,11 +985,14 @@ export async function resendNoticeToDiscord(actor: SessionContext, noticeId: str
     revalidatePath(`/central/creators/${notice.target_creator_id}`);
   }
 
-  return {
+  return buildNoticeWorkflowResult({
     noticeId,
+    sendToDiscord: true,
     discordStatus: discordResult.status,
-    errorMessage: discordResult.errorMessage,
-  };
+    error: discordResult.errorMessage,
+    channelId: discordResult.channelId,
+    discordMessageId: discordResult.discordMessageId,
+  });
 }
 
 export async function sendManualDiscordMessage(
@@ -740,10 +1000,14 @@ export async function sendManualDiscordMessage(
   input: ManualDiscordMessageInput,
 ) {
   if (actor.mockMode) {
-    return {
+    return buildDiscordWorkflowResult({
       status: "skipped",
-      errorMessage: "Demonstração ativa: nenhuma mensagem real foi enviada.",
-    };
+      error: "Demonstração ativa: nenhuma mensagem real foi enviada.",
+      channelId: input.channelId ?? null,
+      discordMessageId: null,
+      successMessage: "Mensagem enviada com sucesso.",
+      failureMessage: "A mensagem foi preparada, mas não foi enviada ao Discord.",
+    });
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
@@ -752,6 +1016,7 @@ export async function sendManualDiscordMessage(
     throw new Error("A configuração interna ainda não está pronta para esta ação.");
   }
 
+  const capabilities = await getDiscordDeliverySchemaCapabilities(serviceClient);
   let channelId = input.channelId ?? null;
   let missingChannelMessage: string | undefined;
 
@@ -772,24 +1037,53 @@ export async function sendManualDiscordMessage(
     missingChannelMessage = getDiscordMissingChannelMessage(resolvedPurpose);
   }
 
-  const { log } = await insertPendingDiscordLog(serviceClient, {
-    targetType: input.targetType,
-    targetCreatorId: input.targetCreatorId ?? null,
-    channelId,
-    messageType: input.messageType,
-  });
+  const { log, attemptedAt } = await insertPendingDiscordLog(
+    serviceClient,
+    {
+      targetType: input.targetType,
+      targetCreatorId: input.targetCreatorId ?? null,
+      channelId,
+      messageType: input.messageType,
+    },
+    capabilities,
+  );
 
   const result = await sendDiscordChannelMessage(channelId, input.content, {
     missingChannelMessage,
   });
 
-  await finalizeDiscordLog(serviceClient, log?.id, {
-    channelId: result.channelId,
-    status: result.status,
-    errorMessage: result.errorMessage,
-  });
+  await finalizeDiscordLog(
+    serviceClient,
+    log?.id,
+    {
+      channelId: result.channelId,
+      status: result.status,
+      errorMessage: result.errorMessage,
+    },
+    capabilities,
+    {
+      targetType: input.targetType,
+      targetCreatorId: input.targetCreatorId ?? null,
+      channelId,
+      messageType: input.messageType,
+      attemptedAt,
+    },
+  );
 
   revalidatePath("/settings/discord");
 
-  return result;
+  return buildDiscordWorkflowResult({
+    status: result.status,
+    error: result.errorMessage,
+    channelId: result.channelId,
+    discordMessageId: result.discordMessageId,
+    successMessage:
+      input.messageType === "discord_connectivity_test"
+        ? "Teste realizado com sucesso."
+        : "Mensagem enviada com sucesso.",
+    failureMessage:
+      input.messageType === "discord_connectivity_test"
+        ? "O teste foi executado, mas não foi enviado ao Discord."
+        : "A mensagem não foi enviada ao Discord.",
+  });
 }

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getDiscordDeliverySchemaCapabilities } from "@/lib/discord-delivery-schema";
 import { SUPABASE_STORAGE_BUCKET, isMockMode } from "@/lib/env";
 import { getMockData } from "@/lib/mock";
 import { canAccessCreator } from "@/lib/permissions";
@@ -271,6 +272,12 @@ export async function getNotices(actor: SessionContext): Promise<CreatorNotice[]
     return notices;
   }
 
+  const capabilities = await getDiscordDeliverySchemaCapabilities(supabase);
+
+  if (!capabilities.logTrackingColumns) {
+    return notices;
+  }
+
   const noticeIds = notices.map((notice) => notice.id);
   const { data: logRows } = await supabase
     .from("discord_message_logs")
@@ -300,10 +307,11 @@ export async function getDiscordLogs(actor: SessionContext): Promise<DiscordMess
     return [];
   }
 
+  const capabilities = await getDiscordDeliverySchemaCapabilities(supabase);
   const { data } = await supabase
     .from("discord_message_logs")
     .select("*")
-    .order("attempted_at", { ascending: false })
+    .order(capabilities.logTrackingColumns ? "attempted_at" : "sent_at", { ascending: false })
     .limit(20);
 
   return (data ?? []) as DiscordMessageLog[];

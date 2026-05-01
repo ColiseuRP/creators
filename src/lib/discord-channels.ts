@@ -80,22 +80,22 @@ export function getDiscordChannelIdForPurpose(
 export function getDiscordMissingChannelMessage(purpose: DiscordChannelPurpose) {
   switch (purpose) {
     case "rules":
-      return "O canal de regras do Discord ainda não foi configurado.";
+      return "Canal de regras do Discord não configurado.";
     case "influencer_requirements":
-      return "O canal de requisitos dos influencers ainda não foi configurado no Discord.";
+      return "Canal de requisitos dos influencers não configurado no Discord.";
     case "streamer_requirements":
-      return "O canal de requisitos dos streamers ainda não foi configurado no Discord.";
+      return "Canal de requisitos dos streamers não configurado no Discord.";
     case "ticket":
-      return "O canal de tickets do Discord ainda não foi configurado.";
+      return "Canal de tickets do Discord não configurado.";
     case "punishments":
-      return "O canal de punições do Discord ainda não foi configurado.";
+      return "Canal de punições do Discord não configurado.";
     case "notices":
-      return "O canal de avisos do Discord ainda não foi configurado.";
+      return "Canal de avisos do Discord não configurado.";
     case "logos":
-      return "O canal de logos do Discord ainda não foi configurado.";
+      return "Canal de logos do Discord não configurado.";
     case "general_creators":
     default:
-      return "O canal geral dos creators no Discord ainda não foi configurado.";
+      return "Canal geral dos creators no Discord não configurado.";
   }
 }
 

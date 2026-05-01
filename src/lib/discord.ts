@@ -4,34 +4,88 @@ import { getServerEnvValue } from "@/lib/server-env";
 import type { Creator, MetricSubmission, NoticeTargetType, NoticeType } from "@/lib/types";
 
 export interface DiscordSendResult {
+  success: boolean;
   status: "sent" | "failed" | "skipped";
   channelId: string | null;
   errorMessage: string | null;
+  message: string;
+  discordMessageId: string | null;
 }
 
-function parseDiscordErrorMessage(rawBody: string) {
-  if (!rawBody) {
-    return "O Discord não retornou detalhes sobre a falha.";
+function stringifyDiscordDetail(
+  detail: {
+    message?: string;
+    code?: number | string;
+  } | null,
+) {
+  if (!detail?.message && !detail?.code) {
+    return null;
   }
 
-  try {
-    const parsed = JSON.parse(rawBody) as {
-      code?: number | string;
-      message?: string;
-    };
+  const parts = [detail.message, detail.code ? `código ${detail.code}` : null].filter(
+    Boolean,
+  );
 
-    const parts = [parsed.message, parsed.code ? `código ${parsed.code}` : null].filter(
-      Boolean,
-    );
+  return parts.length > 0 ? `Discord: ${parts.join(" / ")}.` : null;
+}
 
-    if (parts.length > 0) {
-      return `Discord: ${parts.join(" / ")}.`;
+function buildDiscordFailureMessage(
+  fallbackMessage: string,
+  detail: {
+    message?: string;
+    code?: number | string;
+  } | null,
+) {
+  const suffix = stringifyDiscordDetail(detail);
+  return suffix ? `${fallbackMessage} (${suffix})` : fallbackMessage;
+}
+
+function parseDiscordFailure(status: number, rawBody: string) {
+  let detail: { code?: number | string; message?: string } | null = null;
+
+  if (rawBody) {
+    try {
+      detail = JSON.parse(rawBody) as { code?: number | string; message?: string };
+    } catch {
+      detail = {
+        message: rawBody.slice(0, 500),
+      };
     }
-  } catch {
-    // Mantém o corpo bruto abaixo quando não vier em JSON.
   }
 
-  return rawBody.slice(0, 500);
+  if (status === 401) {
+    return buildDiscordFailureMessage(
+      "A credencial do bot do Discord é inválida ou expirou.",
+      detail,
+    );
+  }
+
+  if (
+    status === 403 ||
+    detail?.code === 50001 ||
+    detail?.code === 50013
+  ) {
+    return buildDiscordFailureMessage(
+      "O bot não tem permissão para enviar mensagens neste canal.",
+      detail,
+    );
+  }
+
+  if (status === 404 || detail?.code === 10003) {
+    return buildDiscordFailureMessage("Canal não encontrado no servidor.", detail);
+  }
+
+  if (status >= 500) {
+    return buildDiscordFailureMessage(
+      "Não foi possível conectar ao Discord. Tente novamente.",
+      detail,
+    );
+  }
+
+  return buildDiscordFailureMessage(
+    "O Discord recusou o envio da mensagem.",
+    detail,
+  );
 }
 
 export function formatMetricReviewDiscordMessage(
@@ -69,22 +123,22 @@ export function formatNoticeDiscordMessage(
   targetType: NoticeTargetType,
   title: string,
   message: string,
-  type: NoticeType,
+  _type: NoticeType,
 ) {
+  void _type;
+
   const headerMap: Record<NoticeTargetType, string> = {
     general: "📢 Aviso geral — Creators Coliseu",
     category: "📢 Aviso por categoria — Creators Coliseu",
     individual: "📌 Aviso para você — Creators Coliseu",
   };
 
-  const normalizedMessage = type === "warning" ? message : message;
-
   return [
     headerMap[targetType],
     "",
     title,
     "",
-    normalizedMessage,
+    message,
     "",
     "Atenciosamente,",
     "Equipe Coliseu RP",
@@ -102,46 +156,78 @@ export async function sendDiscordChannelMessage(
 
   if (!channelId) {
     return {
+      success: false,
       status: "failed",
       channelId: null,
       errorMessage:
-        options?.missingChannelMessage ??
-        "Nenhum canal de destino foi configurado para este envio.",
+        options?.missingChannelMessage ?? "Canal de avisos do Discord não configurado.",
+      message: "O aviso foi salvo, mas não foi enviado ao Discord.",
+      discordMessageId: null,
     };
   }
 
   if (!discordBotToken) {
     return {
+      success: false,
       status: "failed",
       channelId,
-      errorMessage: "O envio para o Discord não está configurado corretamente no momento.",
+      errorMessage: "Token do Discord não configurado.",
+      message: "O aviso foi salvo, mas não foi enviado ao Discord.",
+      discordMessageId: null,
     };
   }
 
-  const response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bot ${discordBotToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      content,
-    }),
-  });
+  try {
+    const response = await fetch(
+      `https://discord.com/api/v10/channels/${channelId}/messages`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bot ${discordBotToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          content,
+        }),
+      },
+    );
 
-  if (!response.ok) {
-    const body = await response.text();
+    if (!response.ok) {
+      const body = await response.text();
+
+      return {
+        success: false,
+        status: "failed",
+        channelId,
+        errorMessage: parseDiscordFailure(response.status, body),
+        message: "O aviso foi salvo, mas não foi enviado ao Discord.",
+        discordMessageId: null,
+      };
+    }
+
+    const payload = (await response.json()) as { id?: string };
 
     return {
+      success: true,
+      status: "sent",
+      channelId,
+      errorMessage: null,
+      message: "Aviso enviado com sucesso.",
+      discordMessageId: payload.id ?? null,
+    };
+  } catch (error) {
+    console.error("[discord] Falha de conexão ao enviar mensagem.", {
+      channelId,
+      error,
+    });
+
+    return {
+      success: false,
       status: "failed",
       channelId,
-      errorMessage: parseDiscordErrorMessage(body),
+      errorMessage: "Não foi possível conectar ao Discord. Tente novamente.",
+      message: "O aviso foi salvo, mas não foi enviado ao Discord.",
+      discordMessageId: null,
     };
   }
-
-  return {
-    status: "sent",
-    channelId,
-    errorMessage: null,
-  };
 }

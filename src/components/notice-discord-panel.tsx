@@ -6,11 +6,7 @@ import type { CreatorNotice, DiscordLogStatus } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 
 function getNoticeStatus(notice: CreatorNotice): DiscordLogStatus {
-  return (
-    notice.latest_discord_log?.status ??
-    notice.discord_status ??
-    "skipped"
-  );
+  return notice.latest_discord_log?.status ?? notice.discord_status ?? "pending";
 }
 
 export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
@@ -23,7 +19,7 @@ export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
       notice.discord_sent_at,
   );
 
-  if (!hasTrackedDeliveryState) {
+  if (!notice.send_to_discord && !hasTrackedDeliveryState) {
     return null;
   }
 
@@ -44,7 +40,7 @@ export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
     ? channelLabel
       ? `${channelLabel} (${channelId})`
       : channelId
-    : "Não definido";
+    : "Aguardando definição";
 
   return (
     <div className="mt-4 rounded-[22px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.02)] p-4">
@@ -56,6 +52,12 @@ export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
           </div>
           {attemptedAt ? <p>Última tentativa: {formatDate(attemptedAt)}</p> : null}
           {deliveredAt ? <p>Envio concluído: {formatDate(deliveredAt)}</p> : null}
+          {!hasTrackedDeliveryState ? (
+            <p>
+              Este aviso pode ser reenviado ao Discord. O histórico detalhado será
+              registrado assim que a estrutura completa de logs estiver disponível.
+            </p>
+          ) : null}
         </div>
 
         <ResendNoticeButton noticeId={notice.id} compact />

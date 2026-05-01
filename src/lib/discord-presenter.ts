@@ -57,6 +57,8 @@ export function getDiscordMessageTypeLabel(
       return "Métrica aprovada";
     case "metric_rejected":
       return "Métrica negada";
+    case "discord_connectivity_test":
+      return "Teste de integração";
     default:
       if (targetType === "individual") {
         return "Aviso para Creator";

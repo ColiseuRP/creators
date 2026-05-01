@@ -10,6 +10,13 @@ interface NoticeComposerProps {
   creators: Creator[];
 }
 
+interface NoticeApiResult {
+  success?: boolean;
+  message?: string;
+  error?: string | null;
+  discordStatus?: string | null;
+}
+
 export function NoticeComposer({ creators }: NoticeComposerProps) {
   const router = useRouter();
   const [targetType, setTargetType] = useState<"individual" | "general" | "category">(
@@ -23,6 +30,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
   const [sendToDiscord, setSendToDiscord] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [feedbackTone, setFeedbackTone] = useState<"success" | "warning" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const categories = useMemo(
@@ -34,6 +42,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
     event.preventDefault();
     setIsLoading(true);
     setFeedback(null);
+    setFeedbackTone(null);
     setError(null);
 
     try {
@@ -67,29 +76,26 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       });
 
       const result = (await response.json()) as {
-        data?: { discordStatus?: string | null; errorMessage?: string | null };
+        data?: NoticeApiResult;
         error?: string;
       };
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Não foi possível enviar o aviso.");
+        throw new Error(result.error ?? "Não foi possível salvar o aviso.");
       }
 
-      const discordLine =
-        sendToDiscord && targetType === "individual"
-          ? " Aviso enviado para a sala do creator."
-          : sendToDiscord && targetType === "category"
-            ? " Aviso enviado para a categoria selecionada."
-          : sendToDiscord
-            ? " Aviso geral enviado para os creators."
-            : "";
+      const noticeResult = result.data;
+      const isPartialFailure = noticeResult?.success === false;
+      const baseMessage =
+        noticeResult?.message ??
+        (sendToDiscord ? "Aviso enviado com sucesso." : "Aviso salvo com sucesso.");
+      const composedMessage =
+        isPartialFailure && noticeResult?.error
+          ? `${baseMessage} ${noticeResult.error}`
+          : baseMessage;
 
-      const suffix =
-        result.data?.discordStatus && result.data.discordStatus !== "sent"
-          ? ` Discord: ${result.data.errorMessage ?? "O envio não foi concluído."}`
-          : discordLine;
-
-      setFeedback(`Aviso enviado com sucesso.${suffix}`);
+      setFeedback(composedMessage);
+      setFeedbackTone(isPartialFailure ? "warning" : "success");
       setTitle("");
       setMessage("");
       setTargetCreatorId("");
@@ -211,7 +217,13 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       </label>
 
       {feedback ? (
-        <div className="rounded-2xl border border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] px-4 py-3 text-sm text-[#d7ffe8]">
+        <div
+          className={
+            feedbackTone === "warning"
+              ? "rounded-2xl border border-[rgba(245,197,66,0.35)] bg-[rgba(245,197,66,0.14)] px-4 py-3 text-sm text-[#fff0bf]"
+              : "rounded-2xl border border-[rgba(46,139,87,0.35)] bg-[rgba(46,139,87,0.18)] px-4 py-3 text-sm text-[#d7ffe8]"
+          }
+        >
           {feedback}
         </div>
       ) : null}

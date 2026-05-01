@@ -15,29 +15,50 @@ export function ResendNoticeButton({
 }) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [isWarning, setIsWarning] = useState(false);
 
   async function handleResend() {
     setIsLoading(true);
-    setError(null);
+    setFeedback(null);
+    setIsWarning(false);
 
     try {
       const response = await fetch(`/api/notices/${noticeId}/resend`, {
         method: "POST",
       });
-      const payload = (await response.json()) as { error?: string };
+      const payload = (await response.json()) as {
+        data?: {
+          success?: boolean;
+          message?: string;
+          error?: string | null;
+        };
+        error?: string;
+      };
 
       if (!response.ok) {
         throw new Error(payload.error ?? "Não foi possível reenviar o aviso.");
       }
 
+      const resendResult = payload.data;
+      const isPartialFailure = resendResult?.success === false;
+      const baseMessage =
+        resendResult?.message ?? "Tentativa de reenvio concluída com sucesso.";
+
+      setFeedback(
+        isPartialFailure && resendResult?.error
+          ? `${baseMessage} ${resendResult.error}`
+          : baseMessage,
+      );
+      setIsWarning(isPartialFailure);
       router.refresh();
     } catch (resendError) {
-      setError(
+      setFeedback(
         resendError instanceof Error
           ? resendError.message
           : "Não foi possível reenviar o aviso.",
       );
+      setIsWarning(true);
     } finally {
       setIsLoading(false);
     }
@@ -62,8 +83,15 @@ export function ResendNoticeButton({
         <span>{isLoading ? "Reenviando..." : "Reenviar"}</span>
       </button>
 
-      {error ? (
-        <p className="text-xs leading-5 text-[#ffd0d0]">{error}</p>
+      {feedback ? (
+        <p
+          className={cn(
+            "text-xs leading-5",
+            isWarning ? "text-[#ffd0d0]" : "text-[#d7ffe8]",
+          )}
+        >
+          {feedback}
+        </p>
       ) : null}
     </div>
   );
