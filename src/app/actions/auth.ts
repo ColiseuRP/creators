@@ -32,13 +32,13 @@ export async function signInAction(formData: FormData) {
   const password = String(formData.get("password") ?? "");
 
   if (!email || !password) {
-    redirect("/login?error=Informe%20email%20e%20senha");
+    redirect("/login?error=Informe%20e-mail%20e%20senha.");
   }
 
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    redirect("/login?error=Acesso%20indisponivel%20no%20momento");
+    redirect("/login?error=Acesso%20indispon%C3%ADvel%20no%20momento.");
   }
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -47,7 +47,7 @@ export async function signInAction(formData: FormData) {
   });
 
   if (error) {
-    redirect("/login?error=Nao%20foi%20possivel%20entrar%20com%20esse%20acesso");
+    redirect("/login?error=N%C3%A3o%20foi%20poss%C3%ADvel%20entrar%20com%20esse%20acesso.");
   }
 
   redirect("/dashboard");
@@ -76,7 +76,7 @@ export async function switchDemoRoleAction(formData: FormData) {
   const role = getRoleFromFormData(formData);
 
   if (!role) {
-    redirect("/login?error=Perfil%20de%20demonstracao%20invalido");
+    redirect("/login?error=Perfil%20de%20demonstra%C3%A7%C3%A3o%20inv%C3%A1lido.");
   }
 
   await setMockRole(role);

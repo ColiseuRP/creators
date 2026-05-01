@@ -2,10 +2,10 @@ import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getApplications } from "@/lib/data";
 import { requireSession } from "@/lib/session";
-import { formatDate } from "@/lib/utils";
+import { formatDateOnly } from "@/lib/utils";
 
 const applicationLabels = {
-  pending: "Em analise",
+  pending: "Em análise",
   approved: "Aprovada",
   rejected: "Reprovado",
 } as const;
@@ -16,8 +16,8 @@ export default async function ApplicationsPage() {
 
   return (
     <SectionCard
-      title="Fila de inscricoes"
-      description="Novos nomes que desejam entrar para a arena, com frequencia de conteudo e contexto para triagem."
+      title="Fila de inscrições"
+      description="Novos nomes que desejam entrar para a arena, com frequência de conteúdo e contexto para triagem."
     >
       <div className="space-y-4">
         {applications.map((application) => (
@@ -49,7 +49,7 @@ export default async function ApplicationsPage() {
                 Discord: {application.discord_name}
               </div>
               <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
-                Enviado em {formatDate(application.created_at, { dateStyle: "medium" })}
+                Enviado em {formatDateOnly(application.created_at)}
               </div>
               <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(245,197,66,0.08)] px-4 py-3 text-sm text-[var(--muted)]">
                 Idade: {application.age}
@@ -58,7 +58,7 @@ export default async function ApplicationsPage() {
 
             {application.observations ? (
               <div className="mt-4 rounded-[22px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.02)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
-                <span className="font-semibold text-[var(--white)]">Observacoes:</span>{" "}
+                <span className="font-semibold text-[var(--white)]">Observações:</span>{" "}
                 {application.observations}
               </div>
             ) : null}
@@ -67,7 +67,7 @@ export default async function ApplicationsPage() {
 
         {applications.length === 0 ? (
           <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-            Nenhuma inscricao aguarda triagem neste momento.
+            Nenhuma inscrição aguarda triagem neste momento.
           </div>
         ) : null}
       </div>

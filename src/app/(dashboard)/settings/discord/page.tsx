@@ -30,16 +30,16 @@ export default async function DiscordSettingsPage() {
   return (
     <div className="space-y-6">
       <SectionCard
-        title="Conexao com o Discord"
-        description="Acompanhe se os avisos da equipe estao prontos para seguir da central ate as salas dos creators."
+        title="Conexão com o Discord"
+        description="Acompanhe se os avisos da equipe estão prontos para seguir da central até as salas dos creators."
       >
         <div className="grid gap-4 lg:grid-cols-2">
           <div className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
             <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
-              Comunicacao {isDiscordConfigured ? "pronta" : "incompleta"}
+              Comunicação {isDiscordConfigured ? "pronta" : "incompleta"}
             </p>
             <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-              Tudo o que e sensivel continua protegido. A equipe acompanha daqui apenas o estado geral da ligacao.
+              Tudo o que é sensível continua protegido. A equipe acompanha daqui apenas o estado geral da conexão.
             </p>
 
             <div className="mt-5 space-y-3">
@@ -65,7 +65,7 @@ export default async function DiscordSettingsPage() {
                   Servidor
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--white)]">
-                  {settings?.guild_id || "Aguardando configuracao"}
+                  {settings?.guild_id || "Aguardando configuração"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
@@ -73,12 +73,12 @@ export default async function DiscordSettingsPage() {
                   Canal geral
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--white)]">
-                  {settings?.general_creators_channel_id || "Aguardando configuracao"}
+                  {settings?.general_creators_channel_id || "Aguardando configuração"}
                 </p>
               </div>
               <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
                 <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
-                  Envio automatico
+                  Envio automático
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--white)]">
                   {settings?.auto_send_enabled ? "Ativado" : "Desativado"}
@@ -90,8 +90,8 @@ export default async function DiscordSettingsPage() {
       </SectionCard>
 
       <SectionCard
-        title="Historico de envios"
-        description="Se uma mensagem falhar, o registro fica salvo aqui sem interromper a decisao tomada pela equipe."
+        title="Histórico de envios"
+        description="Se uma mensagem falhar, o registro fica salvo aqui sem interromper a decisão tomada pela equipe."
       >
         <div className="space-y-4">
           {logs.map((log) => (
@@ -100,7 +100,7 @@ export default async function DiscordSettingsPage() {
 
           {logs.length === 0 ? (
             <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-              Ainda nao existem registros recentes de envio.
+              Nenhum envio para o Discord encontrado.
             </div>
           ) : null}
         </div>

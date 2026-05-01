@@ -28,7 +28,7 @@ export function ResendNoticeButton({
       const payload = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Nao foi possivel reenviar o aviso.");
+        throw new Error(payload.error ?? "Não foi possível reenviar o aviso.");
       }
 
       router.refresh();
@@ -36,7 +36,7 @@ export function ResendNoticeButton({
       setError(
         resendError instanceof Error
           ? resendError.message
-          : "Nao foi possivel reenviar o aviso.",
+          : "Não foi possível reenviar o aviso.",
       );
     } finally {
       setIsLoading(false);
@@ -59,7 +59,7 @@ export function ResendNoticeButton({
         ) : (
           <RotateCcw className="mr-2 h-3.5 w-3.5" />
         )}
-        <span>{isLoading ? "Reenviando" : "Reenviar"}</span>
+        <span>{isLoading ? "Reenviando..." : "Reenviar"}</span>
       </button>
 
       {error ? (

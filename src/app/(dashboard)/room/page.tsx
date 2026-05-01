@@ -13,7 +13,7 @@ export default async function RoomPage() {
     return (
       <SectionCard
         title="Sala do Creator"
-        description="Seu espaco oficial para acompanhar sua identidade na cidade, sua situacao atual e os detalhes da sua sala."
+        description="Seu espaço oficial para acompanhar sua identidade na cidade, sua situação atual e os detalhes da sua sala."
       >
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
@@ -42,7 +42,7 @@ export default async function RoomPage() {
               Sala no Discord
             </p>
             <p className="mt-3 break-all text-sm font-semibold text-[var(--white)]">
-              {roomView.discord_channel_id || "Ainda nao configurado"}
+              {roomView.discord_channel_id || "Ainda não configurado"}
             </p>
           </div>
         </div>
@@ -52,10 +52,10 @@ export default async function RoomPage() {
             {roomView.room?.title ?? "Sua sala na arena"}
           </p>
           <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-            {roomView.room?.description || "Nenhuma descricao foi registrada para sua sala ainda."}
+            {roomView.room?.description || "Nenhuma descrição foi registrada para sua sala ainda."}
           </p>
           <Link href="/metrics/new" className="button-gold mt-5">
-            Enviar Nova Metrica
+            Enviar Nova Métrica
           </Link>
         </div>
       </SectionCard>

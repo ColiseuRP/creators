@@ -8,7 +8,7 @@ import type { AppRole, SessionContext } from "@/lib/types";
 
 const roleLabels: Record<AppRole, string> = {
   admin_general: "Admin Geral",
-  responsavel_creators: "Responsavel Creators",
+  responsavel_creators: "Responsável Creators",
   creator: "Creator",
 };
 
@@ -48,14 +48,14 @@ export function AppShell({
                   </span>
                   {actor.mockMode ? (
                     <span className="rounded-full border border-[rgba(245,197,66,0.22)] bg-[rgba(255,255,255,0.04)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
-                      Demonstracao
+                      Demonstração
                     </span>
                   ) : null}
                 </div>
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--muted)]">
                   {actor.role === "creator"
-                    ? "Seu espaco para acompanhar entregas, metricas e avisos da equipe Creators Coliseu."
-                    : "Ambiente oficial da equipe para conduzir analises, creators, avisos e historico da arena."}
+                    ? "Seu espaço para acompanhar entregas, métricas e avisos da equipe Creators Coliseu."
+                    : "Ambiente oficial da equipe para conduzir análises, creators, avisos e histórico da arena."}
                 </p>
               </div>
             </div>
@@ -63,7 +63,7 @@ export function AppShell({
             <div className="flex flex-col gap-3 lg:items-end">
               <div className="flex flex-wrap gap-2">
                 <Link href="/" className="button-dark">
-                  Ver pagina inicial
+                  Ver página inicial
                 </Link>
                 {actor.mockMode
                   ? (["admin_general", "responsavel_creators", "creator"] as AppRole[]).map(

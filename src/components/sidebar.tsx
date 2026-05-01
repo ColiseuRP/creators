@@ -25,16 +25,16 @@ interface SidebarProps {
 const creatorLinks = [
   { href: "/dashboard", label: "Resumo", icon: LayoutGrid },
   { href: "/room", label: "Sala do Creator", icon: Shield },
-  { href: "/metrics", label: "Metricas", icon: FileBarChart },
-  { href: "/metrics/new", label: "Enviar metrica", icon: Radio },
+  { href: "/metrics", label: "Métricas", icon: FileBarChart },
+  { href: "/metrics/new", label: "Enviar métrica", icon: Radio },
   { href: "/notices", label: "Avisos", icon: Bell },
 ];
 
 const staffLinks = [
   { href: "/dashboard", label: "Central", icon: Crown },
   { href: "/central/creators", label: "Creators", icon: Users },
-  { href: "/applications", label: "Inscricoes", icon: ScrollText },
-  { href: "/metrics", label: "Metricas", icon: FileBarChart },
+  { href: "/applications", label: "Inscrições", icon: ScrollText },
+  { href: "/metrics", label: "Métricas", icon: FileBarChart },
   { href: "/notices", label: "Avisos", icon: Bell },
   { href: "/settings/discord", label: "Discord", icon: Radio },
 ] as const;
@@ -55,8 +55,8 @@ export function Sidebar({ role }: SidebarProps) {
           </h2>
           <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
             {role === "creator"
-              ? "Acompanhe entregas, avisos e seu historico dentro da arena."
-              : "Mantenha os creators alinhados, analise metricas e coordene a operacao."}
+              ? "Acompanhe entregas, avisos e seu histórico dentro da arena."
+              : "Mantenha os creators alinhados, analise métricas e coordene a operação."}
           </p>
         </div>
 
@@ -93,7 +93,7 @@ export function Sidebar({ role }: SidebarProps) {
           <div>
             <p className="text-sm font-semibold text-[var(--white)]">Coliseu RP</p>
             <p className="text-xs leading-5 text-[var(--muted)]">
-              Ambiente oficial para operacao, avisos e acompanhamento dos creators.
+              Ambiente oficial para operação, avisos e acompanhamento dos creators.
             </p>
           </div>
         </div>

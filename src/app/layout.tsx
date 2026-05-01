@@ -14,7 +14,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "Creators Coliseu",
-  description: "O espaco oficial dos criadores de conteudo do Coliseu RP.",
+  description: "O espaço oficial dos criadores de conteúdo do Coliseu RP.",
 };
 
 export default function RootLayout({

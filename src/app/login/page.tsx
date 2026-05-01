@@ -34,7 +34,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             Acesso Creators Coliseu
           </h1>
           <p className="mt-6 max-w-2xl text-lg leading-8 text-[var(--muted)]">
-            Entre para acessar sua sala, enviar metricas e acompanhar seus avisos.
+            Entre para acessar sua sala, enviar métricas e acompanhar seus avisos.
           </p>
         </div>
 
@@ -43,14 +43,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <Shield className="h-6 w-6 text-[var(--gold)]" />
             <p className="mt-4 font-semibold text-[var(--white)]">Sala do Creator</p>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Acompanhe sua jornada, seus avisos e o historico das suas entregas.
+              Acompanhe sua jornada, seus avisos e o histórico das suas entregas.
             </p>
           </article>
           <article className="surface-card p-5">
             <Swords className="h-6 w-6 text-[var(--gold)]" />
             <p className="mt-4 font-semibold text-[var(--white)]">Central da equipe</p>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Analise entregas, envie avisos e mantenha a operacao alinhada.
+              Analise entregas, envie avisos e mantenha a operação alinhada.
             </p>
           </article>
           <article className="surface-card p-5">
@@ -71,11 +71,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </h2>
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             {isMockMode
-              ? "Escolha um perfil de demonstracao para visualizar os acessos da operacao."
+              ? "Escolha um perfil de demonstração para visualizar os acessos da operação."
               : "Use seu acesso para entrar na sua sala ou na central da equipe."}
           </p>
           <Link href="/" className="mt-5 inline-flex text-sm font-semibold text-[var(--gold)] hover:text-[var(--white)]">
-            Voltar para o inicio
+            Voltar para o início
           </Link>
         </div>
 
@@ -91,17 +91,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               {
                 role: "admin_general",
                 label: "Entrar como Admin Geral",
-                description: "Acesso completo a creators, analises, avisos e historico.",
+                description: "Acesso completo a creators, análises, avisos e histórico.",
               },
               {
                 role: "responsavel_creators",
-                label: "Entrar como Responsavel Creators",
-                description: "Gestao de creators, metricas, avisos e revisoes.",
+                label: "Entrar como Responsável Creators",
+                description: "Gestão de creators, métricas, avisos e revisões.",
               },
               {
                 role: "creator",
                 label: "Entrar como Creator",
-                description: "Acesso a propria sala, metricas e avisos recebidos.",
+                description: "Acesso à própria sala, métricas e avisos recebidos.",
               },
             ].map((option) => (
               <form
@@ -120,7 +120,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   type="submit"
                   className="button-gold mt-5"
                 >
-                  Entrar na demonstracao
+                  Entrar na demonstração
                 </button>
               </form>
             ))}
@@ -133,7 +133,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 name="email"
                 type="email"
                 required
-                placeholder="voce@email.com"
+                placeholder="nome@exemplo.com"
                 className="field-input"
               />
             </label>

@@ -40,7 +40,7 @@ export function MetricReviewPanel({ metricId }: MetricReviewPanelProps) {
       };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Nao foi possivel concluir a analise.");
+        throw new Error(payload.error ?? "Não foi possível concluir a análise.");
       }
 
       const extra =
@@ -50,8 +50,8 @@ export function MetricReviewPanel({ metricId }: MetricReviewPanelProps) {
 
       setFeedback(
         decision === "approved"
-          ? `Metrica aprovada. Continue representando o Coliseu!${extra}`
-          : `Metrica negada. O motivo foi registrado para o creator.${extra}`,
+          ? `Métrica aprovada. Continue representando o Coliseu!${extra}`
+          : `Métrica negada. O motivo foi registrado para o creator.${extra}`,
       );
       setReason("");
       router.refresh();
@@ -59,7 +59,7 @@ export function MetricReviewPanel({ metricId }: MetricReviewPanelProps) {
       setError(
         reviewError instanceof Error
           ? reviewError.message
-          : "Falha inesperada ao revisar a metrica.",
+          : "Falha inesperada ao revisar a métrica.",
       );
     } finally {
       setIsLoading(null);
@@ -68,12 +68,12 @@ export function MetricReviewPanel({ metricId }: MetricReviewPanelProps) {
 
   return (
     <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-4">
-      <p className="font-semibold text-[var(--white)]">Analise da metrica</p>
+      <p className="font-semibold text-[var(--white)]">Análise da métrica</p>
       <textarea
         rows={3}
         value={reason}
         onChange={(event) => setReason(event.target.value)}
-        placeholder="Motivo da aprovacao ou da negativa"
+        placeholder="Informe o motivo da aprovação ou da negativa."
         className="field-textarea mt-3"
       />
 

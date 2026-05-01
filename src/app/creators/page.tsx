@@ -18,8 +18,8 @@ export default async function PublicCreatorsPage() {
             Vozes que representam a cidade dentro e fora da arena.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--muted)]">
-            Conheca alguns dos creators que carregam o nome do Coliseu RP em
-            streams, videos, cortes e historias que ajudam a fortalecer a cidade.
+            Conheça alguns dos creators que carregam o nome do Coliseu RP em
+            streams, vídeos, cortes e histórias que ajudam a fortalecer a cidade.
           </p>
         </div>
       </section>
@@ -47,7 +47,7 @@ export default async function PublicCreatorsPage() {
               </div>
 
               <p className="mt-4 text-sm leading-7 text-[var(--muted)]">
-                {creator.bio || "Creator oficial da arena, ativo na comunidade e na producao de conteudo."}
+                {creator.bio || "Creator oficial da arena, ativo na comunidade e na produção de conteúdo."}
               </p>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -80,7 +80,7 @@ export default async function PublicCreatorsPage() {
               Quer entrar para a equipe oficial?
             </p>
             <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-              Envie sua inscricao para a analise da equipe Creators Coliseu.
+              Envie sua inscrição para a análise da equipe Creators Coliseu.
             </p>
           </div>
           <Link href="/inscricao" className="button-gold">

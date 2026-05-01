@@ -27,25 +27,25 @@ export default async function DashboardPage() {
           value: creatorName,
           subtitle: actor.creator
             ? `${actor.creator.city_name} / ${actor.creator.category}`
-            : "Seu nome esta registrado na equipe oficial do Coliseu RP.",
+            : "Seu nome está registrado na equipe oficial do Coliseu RP.",
         },
         {
-          title: "Metricas enviadas",
+          title: "Métricas enviadas",
           value: formatNumber(metricsSentCount),
-          subtitle: "Tudo o que voce ja entregou para a equipe analisar.",
+          subtitle: "Tudo o que você já entregou para a equipe analisar.",
         },
         {
-          title: "Metricas aprovadas",
+          title: "Métricas aprovadas",
           value: formatNumber(snapshot.approvedMetricsCount),
-          subtitle: "Conteudos validados e reconhecidos pela equipe.",
+          subtitle: "Conteúdos validados e reconhecidos pela equipe.",
         },
         {
-          title: "Metricas negadas",
+          title: "Métricas negadas",
           value: formatNumber(snapshot.rejectedMetricsCount),
           subtitle: "Envios que precisam de ajuste antes de voltar para a arena.",
         },
         {
-          title: "Em analise",
+          title: "Em análise",
           value: formatNumber(snapshot.pendingMetricsCount),
           subtitle: "Entregas aguardando retorno da equipe Creators Coliseu.",
         },
@@ -59,22 +59,22 @@ export default async function DashboardPage() {
         {
           title: "Creators ativos",
           value: formatNumber(snapshot.creatorsCount),
-          subtitle: "Nomes hoje vinculados a operacao oficial da cidade.",
+          subtitle: "Nomes hoje vinculados à operação oficial da cidade.",
         },
         {
-          title: "Metricas em analise",
+          title: "Métricas em análise",
           value: formatNumber(snapshot.pendingMetricsCount),
-          subtitle: "Envios aguardando leitura e decisao da equipe.",
+          subtitle: "Envios aguardando leitura e decisão da equipe.",
         },
         {
-          title: "Metricas aprovadas",
+          title: "Métricas aprovadas",
           value: formatNumber(snapshot.approvedMetricsCount),
-          subtitle: "Conteudos que ja receberam o aval da central.",
+          subtitle: "Conteúdos que já receberam o aval da central.",
         },
         {
-          title: "Inscricoes em triagem",
+          title: "Inscrições em triagem",
           value: formatNumber(snapshot.pendingApplicationsCount),
-          subtitle: "Novos nomes esperando avaliacao da equipe.",
+          subtitle: "Novos nomes esperando avaliação da equipe.",
         },
         {
           title: "Avisos no radar",
@@ -94,13 +94,13 @@ export default async function DashboardPage() {
             </h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-[var(--muted)]">
               {isCreator
-                ? "Acompanhe seus numeros, leia os avisos da equipe e mantenha suas entregas vivas dentro do Coliseu RP."
-                : "Tenha uma leitura rapida do movimento da equipe, avance nas analises e mantenha a cidade organizada."}
+                ? "Acompanhe seus números, leia os avisos da equipe e mantenha suas entregas vivas dentro do Coliseu RP."
+                : "Tenha uma leitura rápida do movimento da equipe, avance nas análises e mantenha a cidade organizada."}
             </p>
           </div>
 
           <Link href={isCreator ? "/metrics/new" : "/metrics"} className="button-gold">
-            {isCreator ? "Enviar Nova Metrica" : "Analisar Metricas"}
+            {isCreator ? "Enviar Nova Métrica" : "Analisar métricas"}
           </Link>
         </div>
       </section>
@@ -120,11 +120,11 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
         <SectionCard
-          title={isCreator ? "Suas metricas recentes" : "Metricas recentes"}
+          title={isCreator ? "Suas métricas recentes" : "Métricas recentes"}
           description={
             isCreator
-              ? "Veja como suas ultimas entregas estao caminhando dentro da avaliacao da equipe."
-              : "Acompanhe o fluxo mais recente de entregas e a situacao de cada creator."
+              ? "Veja como suas últimas entregas estão caminhando dentro da avaliação da equipe."
+              : "Acompanhe o fluxo mais recente de entregas e a situação de cada creator."
           }
         >
           <div className="space-y-4">
@@ -139,7 +139,7 @@ export default async function DashboardPage() {
                       {metric.creator?.name ?? "Creator"} / {metric.platform}
                     </p>
                     <p className="mt-1 text-sm text-[var(--muted)]">
-                      {metric.content_type} / {formatNumber(metric.views)} views / enviada em{" "}
+                      {metric.content_type} / {formatNumber(metric.views)} visualizações / enviada em{" "}
                       {formatDate(metric.submitted_at)}
                     </p>
                   </div>
@@ -150,7 +150,7 @@ export default async function DashboardPage() {
 
             {snapshot.recentMetrics.length === 0 ? (
               <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-                Nenhuma metrica apareceu por aqui ainda.
+                Nenhuma métrica enviada até o momento.
               </div>
             ) : null}
           </div>
@@ -160,7 +160,7 @@ export default async function DashboardPage() {
           title={actor.canManageCreators ? "Avisos e registros" : "Avisos da equipe"}
           description={
             actor.canManageCreators
-              ? "Recados recentes e historico das mensagens que acompanham as decisoes da central."
+              ? "Recados recentes e histórico das mensagens que acompanham as decisões da central."
               : "Leia os comunicados que ajudam a manter seu caminho alinhado com a cidade."
           }
         >
@@ -181,7 +181,7 @@ export default async function DashboardPage() {
 
             {snapshot.recentNotices.length === 0 ? (
               <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-                Ainda nao existem avisos recentes para mostrar.
+                Nenhum aviso registrado.
               </div>
             ) : null}
 
@@ -210,7 +210,7 @@ export default async function DashboardPage() {
         description={
           isCreator
             ? "Retome sua rotina com rapidez e siga representando o Coliseu RP."
-            : "Acesse os pontos principais da operacao sem perder o ritmo da analise."
+            : "Acesse os pontos principais da operação sem perder o ritmo da análise."
         }
       >
         <div className="grid gap-4 md:grid-cols-3">
@@ -219,12 +219,12 @@ export default async function DashboardPage() {
             className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(245,197,66,0.24)] hover:shadow-[0_18px_40px_rgba(245,197,66,0.08)]"
           >
             <p className="font-display text-xl font-semibold tracking-tight text-[var(--white)]">
-              {actor.role === "creator" ? "Enviar Nova Metrica" : "Analisar Metricas"}
+              {actor.role === "creator" ? "Enviar Nova Métrica" : "Analisar métricas"}
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               {actor.role === "creator"
                 ? "Registre sua entrega com prints e contexto para a equipe."
-                : "Veja pendencias, aprove envios e devolva retornos claros."}
+                : "Veja pendências, aprove envios e devolva retornos claros."}
             </p>
           </Link>
 
@@ -237,8 +237,8 @@ export default async function DashboardPage() {
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               {actor.role === "creator"
-                ? "Veja seu espaco oficial, sua situacao atual e os detalhes da sala."
-                : "Consulte perfis, historico e leitura rapida de cada creator."}
+                ? "Veja seu espaço oficial, sua situação atual e os detalhes da sala."
+                : "Consulte perfis, histórico e leitura rápida de cada creator."}
             </p>
           </Link>
 
@@ -247,12 +247,12 @@ export default async function DashboardPage() {
             className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5 transition hover:-translate-y-0.5 hover:border-[rgba(245,197,66,0.24)] hover:shadow-[0_18px_40px_rgba(245,197,66,0.08)]"
           >
             <p className="font-display text-xl font-semibold tracking-tight text-[var(--white)]">
-              {actor.canManageCreators ? "Enviar avisos" : "Revisar historico"}
+              {actor.canManageCreators ? "Enviar avisos" : "Revisar histórico"}
             </p>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
               {actor.canManageCreators
                 ? "Dispare avisos para a equipe, por categoria ou direto para cada sala."
-                : "Consulte retornos, prints enviados e observacoes anteriores."}
+                : "Consulte retornos, prints enviados e observações anteriores."}
             </p>
           </Link>
         </div>

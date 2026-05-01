@@ -50,7 +50,7 @@ export default async function CreatorDetailPage({
               Sala no Discord
             </p>
             <p className="mt-3 break-all text-sm font-semibold text-[var(--white)]">
-              {creator.discord_channel_id || "Ainda nao configurado"}
+              {creator.discord_channel_id || "Ainda não configurado"}
             </p>
           </div>
 
@@ -59,7 +59,7 @@ export default async function CreatorDetailPage({
               Sala individual
             </p>
             <p className="mt-3 text-sm font-semibold leading-7 text-[var(--white)]">
-              {creator.room?.description || "Sem descricao registrada."}
+              {creator.room?.description || "Sem descrição registrada."}
             </p>
           </div>
         </div>
@@ -67,8 +67,8 @@ export default async function CreatorDetailPage({
 
       <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
         <SectionCard
-          title="Historico de metricas"
-          description="Ultimas entregas do creator, com numeros, anexos e leitura da equipe."
+          title="Histórico de métricas"
+          description="Últimas entregas do creator, com números, anexos e leitura da equipe."
         >
           <div className="space-y-4">
             {metrics.map((metric) => (
@@ -82,7 +82,7 @@ export default async function CreatorDetailPage({
                       {metric.platform} / {metric.content_type}
                     </p>
                     <p className="mt-1 text-sm text-[var(--muted)]">
-                      {formatNumber(metric.views)} views / {formatDate(metric.submitted_at)}
+                      {formatNumber(metric.views)} visualizações / {formatDate(metric.submitted_at)}
                     </p>
                   </div>
                   <StatusBadge status={metric.status} />
@@ -90,16 +90,16 @@ export default async function CreatorDetailPage({
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(245,197,66,0.08)] px-4 py-3 text-sm text-[var(--muted)]">
-                    Likes: {formatNumber(metric.likes)}
+                    Curtidas: {formatNumber(metric.likes)}
                   </div>
                   <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
-                    Comentarios: {formatNumber(metric.comments)}
+                    Comentários: {formatNumber(metric.comments)}
                   </div>
                   <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
                     Compart.: {formatNumber(metric.shares)}
                   </div>
                   <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
-                    Live: {formatDuration(metric.live_duration)}
+                    Duração da live: {formatDuration(metric.live_duration)}
                   </div>
                 </div>
               </article>
@@ -107,7 +107,7 @@ export default async function CreatorDetailPage({
 
             {metrics.length === 0 ? (
               <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-                Este creator ainda nao possui metricas registradas.
+                Nenhuma métrica enviada até o momento.
               </div>
             ) : null}
           </div>
@@ -116,7 +116,7 @@ export default async function CreatorDetailPage({
         <div className="space-y-6">
           <SectionCard
             title="Avisos relacionados"
-            description="Recados gerais, por categoria ou enviados direto para a sala do creator."
+            description="Recados gerais, por categoria ou enviados direto para a Sala do Creator."
           >
             <div className="space-y-3">
               {notices.map((notice) => (
@@ -135,15 +135,15 @@ export default async function CreatorDetailPage({
 
               {notices.length === 0 ? (
                 <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-                  Ainda nao existem avisos ligados a este creator.
+                  Nenhum aviso registrado.
                 </div>
               ) : null}
             </div>
           </SectionCard>
 
           <SectionCard
-            title="Historico no Discord"
-            description="Resultado das mensagens enviadas para acompanhar aprovacoes, negacoes e avisos da equipe."
+            title="Histórico no Discord"
+            description="Resultado das mensagens enviadas para acompanhar aprovações, negações e avisos da equipe."
           >
             <div className="space-y-3">
               {logs.map((log) => (
@@ -152,7 +152,7 @@ export default async function CreatorDetailPage({
 
               {logs.length === 0 ? (
                 <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-                  Nenhum envio ligado a este creator foi registrado ainda.
+                  Nenhum envio para o Discord encontrado.
                 </div>
               ) : null}
             </div>

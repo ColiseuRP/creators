@@ -9,8 +9,8 @@ import { formatDate } from "@/lib/utils";
 
 const targetLabels = {
   general: "Aviso geral",
-  individual: "Sala individual",
-  category: "Categoria",
+  individual: "Aviso individual",
+  category: "Aviso por categoria",
 } as const;
 
 export default async function NoticesPage() {
@@ -25,18 +25,18 @@ export default async function NoticesPage() {
       {actor.canManageCreators ? (
         <SectionCard
           title="Novo aviso da arena"
-          description="Envie avisos gerais, por categoria ou individuais, com a opcao de encaminhar o recado ao Discord."
+          description="Envie avisos gerais, por categoria ou individuais, com a opção de encaminhar o recado ao Discord."
         >
           <NoticeComposer creators={creators} />
         </SectionCard>
       ) : null}
 
       <SectionCard
-        title={actor.canManageCreators ? "Historico de avisos" : "Avisos recebidos"}
+        title={actor.canManageCreators ? "Histórico de avisos" : "Avisos recebidos"}
         description={
           actor.canManageCreators
-            ? "Recados ja enviados pela equipe para manter a operacao da cidade organizada."
-            : "Comunicados visiveis para voce dentro da sua jornada como creator."
+            ? "Recados já enviados pela equipe para manter a operação da cidade organizada."
+            : "Comunicados visíveis para você dentro da sua jornada como Creator."
         }
       >
         <div className="space-y-4">
@@ -51,7 +51,7 @@ export default async function NoticesPage() {
                     {notice.title}
                   </p>
                   <p className="mt-2 text-sm text-[var(--muted)]">
-                    {formatDate(notice.sent_at)} / destino {targetLabels[notice.target_type]}
+                    {formatDate(notice.sent_at)} / Destino: {targetLabels[notice.target_type]}
                   </p>
                 </div>
                 <StatusBadge status={notice.type} />
@@ -63,7 +63,7 @@ export default async function NoticesPage() {
 
           {notices.length === 0 ? (
             <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-              Nenhum aviso foi registrado por aqui ainda.
+              Nenhum aviso registrado.
             </div>
           ) : null}
         </div>

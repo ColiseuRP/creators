@@ -12,10 +12,10 @@ interface PublicShellProps {
 }
 
 const links = [
-  { href: "/", label: "Inicio" },
+  { href: "/", label: "Início" },
   { href: "/creators", label: "Creators Oficiais" },
   { href: "/regras", label: "Regras" },
-  { href: "/inscricao", label: "Inscricao" },
+  { href: "/inscricao", label: "Inscrição" },
 ] as const;
 
 function getAreaLink(actor: SessionContext) {
@@ -67,7 +67,7 @@ export function PublicShell({
                 {areaLink.label}
               </Link>
               <Link href="/inscricao" className="button-ghost inline-flex lg:hidden">
-                Inscricao
+                Inscrição
               </Link>
             </div>
           </div>
@@ -99,13 +99,13 @@ export function PublicShell({
             <ColiseuLogo href="/" priorityLabel="Creators Coliseu" />
             <div className="space-y-2 text-sm leading-7 text-[var(--muted)]">
               <p className="font-semibold text-[var(--white)]">Coliseu RP</p>
-              <p>Sistema oficial de organizacao dos Creators Coliseu.</p>
+              <p>Sistema oficial de organização dos Creators Coliseu.</p>
             </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="eyebrow">Links rapidos</p>
+              <p className="eyebrow">Links rápidos</p>
               <div className="mt-3 space-y-2 text-sm text-[var(--muted)]">
                 {links.map((link) => (
                   <Link key={link.href} href={link.href} className="block hover:text-[var(--gold)]">
@@ -116,11 +116,11 @@ export function PublicShell({
             </div>
 
             <div>
-              <p className="eyebrow">Area oficial</p>
+              <p className="eyebrow">Área oficial</p>
               <div className="mt-3 space-y-2 text-sm text-[var(--muted)]">
                 <p>Creators Coliseu</p>
                 <p>Equipe Coliseu RP</p>
-                <p>Comunidade, arena e historia.</p>
+                <p>Comunidade, arena e história.</p>
               </div>
             </div>
           </div>

@@ -7,10 +7,10 @@ export default async function NewMetricPage() {
 
   return (
     <SectionCard
-      title="Enviar metrica"
-      description="Envie os prints e as informacoes do seu conteudo para analise da equipe responsavel."
+      title="Enviar métrica"
+      description="Envie os prints e as informações do seu conteúdo para análise da equipe responsável."
     >
-      <MetricSubmissionForm creatorName={actor.creator?.name ?? "creator"} />
+      <MetricSubmissionForm creatorName={actor.creator?.name ?? "Creator"} />
     </SectionCard>
   );
 }

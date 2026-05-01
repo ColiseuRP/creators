@@ -72,22 +72,24 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       };
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Nao foi possivel enviar o aviso.");
+        throw new Error(result.error ?? "Não foi possível enviar o aviso.");
       }
 
       const discordLine =
         sendToDiscord && targetType === "individual"
           ? " Aviso enviado para a sala do creator."
+          : sendToDiscord && targetType === "category"
+            ? " Aviso enviado para a categoria selecionada."
           : sendToDiscord
             ? " Aviso geral enviado para os creators."
             : "";
 
       const suffix =
         result.data?.discordStatus && result.data.discordStatus !== "sent"
-          ? ` Discord: ${result.data.errorMessage ?? "O envio nao foi concluido."}`
+          ? ` Discord: ${result.data.errorMessage ?? "O envio não foi concluído."}`
           : discordLine;
 
-      setFeedback(`Aviso publicado com sucesso.${suffix}`);
+      setFeedback(`Aviso enviado com sucesso.${suffix}`);
       setTitle("");
       setMessage("");
       setTargetCreatorId("");
@@ -97,7 +99,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Erro inesperado ao enviar aviso.",
+          : "Erro inesperado ao enviar o aviso.",
       );
     } finally {
       setIsLoading(false);
@@ -116,9 +118,9 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
             }
             className="field-input"
           >
-            <option value="general">Geral</option>
-            <option value="category">Categoria</option>
-            <option value="individual">Individual</option>
+            <option value="general">Aviso geral</option>
+            <option value="category">Aviso por categoria</option>
+            <option value="individual">Aviso individual</option>
           </select>
         </label>
 
@@ -133,14 +135,14 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
           >
             <option value="info">Informativo</option>
             <option value="success">Destaque</option>
-            <option value="warning">Atencao</option>
+            <option value="warning">Atenção</option>
           </select>
         </label>
       </div>
 
       {targetType === "individual" ? (
         <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Creator alvo</span>
+          <span>Creator de destino</span>
           <select
             value={targetCreatorId}
             onChange={(event) => setTargetCreatorId(event.target.value)}
@@ -159,7 +161,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
 
       {targetType === "category" ? (
         <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Categoria alvo</span>
+          <span>Categoria de destino</span>
           <select
             value={targetCategory}
             onChange={(event) => setTargetCategory(event.target.value)}
@@ -177,7 +179,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       ) : null}
 
       <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-        <span>Titulo</span>
+        <span>Título</span>
         <input
           value={title}
           onChange={(event) => setTitle(event.target.value)}
@@ -193,7 +195,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
           onChange={(event) => setMessage(event.target.value)}
           rows={4}
           required
-          placeholder="Use **negrito**, *italico*, quebras de linha e mencoes como @everyone ou <@ID>."
+          placeholder="Use **negrito**, *itálico*, quebras de linha e menções como @everyone ou <@ID>."
           className="field-textarea"
         />
       </label>
@@ -226,7 +228,7 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
         ) : (
           <Megaphone className="mr-2 h-4 w-4" />
         )}
-        <span>{isLoading ? "Enviando..." : "Publicar aviso"}</span>
+        <span>{isLoading ? "Enviando..." : "Enviar aviso"}</span>
       </button>
     </form>
   );

@@ -24,16 +24,16 @@ const styles: Record<BadgeStatus, string> = {
 
 const labels: Record<BadgeStatus, string> = {
   active: "Ativo",
-  pending: "Em analise",
+  pending: "Em análise",
   paused: "Pausado",
   approved: "Aprovada",
   rejected: "Negada",
   sent: "Enviado",
   failed: "Falhou",
   skipped: "N\u00E3o enviado",
-  info: "Aviso",
-  success: "Confirmado",
-  warning: "Atencao",
+  info: "Informativo",
+  success: "Destaque",
+  warning: "Atenção",
 };
 
 export function StatusBadge({

@@ -45,18 +45,18 @@ export function ApplicationForm() {
       const result = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Nao foi possivel enviar sua inscricao.");
+        throw new Error(result.error ?? "Não foi possível enviar sua inscrição.");
       }
 
       setSuccess(
-        "Sua inscricao foi enviada para a equipe Creators Coliseu. Aguarde a analise.",
+        "Sua inscrição foi enviada para a equipe Creators Coliseu. Aguarde a análise.",
       );
       event.currentTarget.reset();
     } catch (submitError) {
       setError(
         submitError instanceof Error
           ? submitError.message
-          : "Nao foi possivel enviar sua inscricao.",
+          : "Não foi possível enviar sua inscrição.",
       );
     } finally {
       setIsSubmitting(false);
@@ -96,7 +96,7 @@ export function ApplicationForm() {
           <input
             name="category"
             required
-            placeholder="Streamer, influencer, cortes, videos..."
+            placeholder="Streamer, influencer, cortes, vídeos..."
             className="field-input"
           />
         </label>
@@ -127,39 +127,39 @@ export function ApplicationForm() {
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)] md:col-span-2">
-          <span>Frequencia de conteudo</span>
+          <span>Frequência de conteúdo</span>
           <input
             name="frequency"
             required
-            placeholder="Ex.: lives 4x por semana, videos diarios..."
+            placeholder="Ex.: lives 4x por semana, vídeos diários..."
             className="field-input"
           />
         </label>
       </div>
 
       <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-        <span>Por que voce quer representar o Coliseu RP?</span>
+        <span>Por que você quer representar o Coliseu RP?</span>
         <textarea
           name="reason"
           rows={4}
           required
           className="field-textarea"
-          placeholder="Fale sobre sua historia, sua frequencia e como voce pode fortalecer a cidade."
+          placeholder="Fale sobre sua história, sua frequência e como você pode fortalecer a cidade."
         />
       </label>
 
       <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-        <span>Links de conteudo</span>
+        <span>Links de conteúdo</span>
         <textarea
           name="contentLinks"
           rows={3}
           className="field-textarea"
-          placeholder="Envie links de lives, videos, cortes ou posts relevantes."
+          placeholder="Envie links de lives, vídeos, cortes ou posts relevantes."
         />
       </label>
 
       <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-        <span>Observacoes</span>
+        <span>Observações</span>
         <textarea
           name="observations"
           rows={3}
@@ -189,7 +189,7 @@ export function ApplicationForm() {
         ) : (
           <>
             <SendHorizonal className="mr-2 h-4 w-4" />
-            Enviar inscricao para analise
+            Enviar inscrição para análise
           </>
         )}
       </button>

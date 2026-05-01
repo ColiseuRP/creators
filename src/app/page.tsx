@@ -29,7 +29,7 @@ export default async function Home() {
             <div>
               <div className="mb-6">
                 <ColiseuLogo
-                  priorityLabel="O espaco oficial dos criadores"
+                  priorityLabel="O espaço oficial dos criadores"
                   imageClassName="scale-[1.08]"
                 />
               </div>
@@ -37,16 +37,16 @@ export default async function Home() {
               <p className="eyebrow">Arena oficial de creators</p>
               <h1 className="hero-title mt-4">Creators Coliseu</h1>
               <p className="mt-4 max-w-2xl text-xl text-[var(--white)]">
-                O espaco oficial dos criadores de conteudo do Coliseu RP.
+                O espaço oficial dos criadores de conteúdo do Coliseu RP.
               </p>
               <p className="mt-4 max-w-2xl font-display text-2xl font-medium text-[var(--gold)]">
-                Entre para a arena, represente a cidade e mostre sua historia para o mundo.
+                Entre para a arena, represente a cidade e mostre sua história para o mundo.
               </p>
               <p className="mt-6 max-w-3xl text-base leading-8 text-[var(--muted)]">
                 O Creators Coliseu foi criado para reunir e valorizar os criadores de
-                conteudo que ajudam a movimentar, divulgar e fortalecer a nossa cidade.
-                Aqui, streamers, influencers e produtores de conteudo tem um espaco
-                proprio para acompanhar suas entregas, enviar metricas e receber avisos
+                conteúdo que ajudam a movimentar, divulgar e fortalecer a nossa cidade.
+                Aqui, streamers, influencers e produtores de conteúdo têm um espaço
+                próprio para acompanhar suas entregas, enviar métricas e receber avisos
                 da equipe.
               </p>
 
@@ -58,7 +58,7 @@ export default async function Home() {
                   Ver Creators
                 </Link>
                 <Link href={areaHref} className="button-dark">
-                  Enviar Metricas
+                  Enviar métricas
                 </Link>
               </div>
             </div>
@@ -67,17 +67,17 @@ export default async function Home() {
               {[
                 {
                   title: "Destaque dentro da comunidade",
-                  text: "Ganhe espaco na cidade com uma presenca forte, reconhecida e bem representada.",
+                  text: "Ganhe espaço na cidade com uma presença forte, reconhecida e bem representada.",
                   icon: Crown,
                 },
                 {
-                  title: "Divulgacao oficial",
-                  text: "Conteudos e entregas podem entrar nas acoes da equipe Creators Coliseu.",
+                  title: "Divulgação oficial",
+                  text: "Conteúdos e entregas podem entrar nas ações da equipe Creators Coliseu.",
                   icon: Radio,
                 },
                 {
                   title: "Sala do Creator",
-                  text: "Um ambiente proprio para acompanhar metricas, avisos e o historico da sua jornada.",
+                  text: "Um ambiente próprio para acompanhar métricas, avisos e o histórico da sua jornada.",
                   icon: Shield,
                 },
               ].map(({ title, text, icon: Icon }) => (
@@ -105,12 +105,12 @@ export default async function Home() {
           <div className="surface-card p-6 lg:p-8">
             <p className="eyebrow">O que move a arena</p>
             <h2 className="mt-4 font-display text-3xl font-semibold text-[var(--white)]">
-              Uma frente oficial para quem da voz, ritmo e alcance ao Coliseu RP.
+              Uma frente oficial para quem dá voz, ritmo e alcance ao Coliseu RP.
             </h2>
             <p className="mt-4 text-sm leading-8 text-[var(--muted)]">
               O projeto une creators, equipe e comunidade em torno de uma identidade
-              forte. Cada entrega ajuda a mostrar a cidade, valorizar historias e
-              fortalecer a presenca do Coliseu para quem ja vive a experiencia e para
+              forte. Cada entrega ajuda a mostrar a cidade, valorizar histórias e
+              fortalecer a presença do Coliseu para quem já vive a experiência e para
               quem ainda vai entrar nela.
             </p>
           </div>
@@ -119,21 +119,21 @@ export default async function Home() {
             {[
               {
                 title: "Reconhecimento oficial",
-                text: "Destaque como Creator Coliseu com espaco proprio dentro da operacao.",
+                text: "Destaque como Creator Coliseu com espaço próprio dentro da operação.",
                 icon: Trophy,
               },
               {
-                title: "Acoes especiais",
-                text: "Participacao em campanhas, eventos e movimentos importantes da cidade.",
+                title: "Ações especiais",
+                text: "Participação em campanhas, eventos e movimentos importantes da cidade.",
                 icon: Swords,
               },
               {
                 title: "Cargo exclusivo no Discord",
-                text: "Presenca alinhada com a equipe e comunicacao mais direta com a central.",
+                text: "Presença alinhada com a equipe e comunicação mais direta com a central.",
                 icon: Shield,
               },
               {
-                title: "Forca coletiva",
+                title: "Força coletiva",
                 text: "Creators oficiais reunidos para ampliar a voz da cidade dentro e fora da arena.",
                 icon: Users,
               },

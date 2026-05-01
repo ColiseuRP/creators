@@ -45,10 +45,10 @@ export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
         <div className="space-y-2 text-xs leading-6 text-[var(--muted)]">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={status} label={getDiscordStatusLabel(status)} />
-            <span>Canal: {channelId || "nao definido"}</span>
+            <span>Canal: {channelId || "Não definido"}</span>
           </div>
-          {attemptedAt ? <p>Ultima tentativa: {formatDate(attemptedAt)}</p> : null}
-          {deliveredAt ? <p>Envio concluido: {formatDate(deliveredAt)}</p> : null}
+          {attemptedAt ? <p>Última tentativa: {formatDate(attemptedAt)}</p> : null}
+          {deliveredAt ? <p>Envio concluído: {formatDate(deliveredAt)}</p> : null}
         </div>
 
         <ResendNoticeButton noticeId={notice.id} compact />
@@ -56,7 +56,7 @@ export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
 
       {errorMessage ? (
         <p className="mt-4 rounded-2xl border border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] px-4 py-3 text-sm leading-6 text-[#ffd0d0]">
-          {errorMessage}
+          <span className="font-semibold">Motivo da falha:</span> {errorMessage}
         </p>
       ) : null}
     </div>

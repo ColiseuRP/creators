@@ -1,6 +1,9 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
+const BRAZIL_TIME_ZONE = "America/Sao_Paulo";
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -8,8 +11,11 @@ export function cn(...inputs: ClassValue[]) {
 export function formatDate(
   value: string | null | undefined,
   options: Intl.DateTimeFormatOptions = {
-    dateStyle: "short",
-    timeStyle: "short",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
   },
 ) {
   if (!value) {
@@ -17,10 +23,25 @@ export function formatDate(
   }
 
   try {
-    return new Intl.DateTimeFormat("pt-BR", options).format(new Date(value));
+    const parsedDate = DATE_ONLY_PATTERN.test(value)
+      ? new Date(`${value}T12:00:00`)
+      : new Date(value);
+
+    return new Intl.DateTimeFormat("pt-BR", {
+      timeZone: BRAZIL_TIME_ZONE,
+      ...options,
+    }).format(parsedDate);
   } catch {
     return value;
   }
+}
+
+export function formatDateOnly(value: string | null | undefined) {
+  return formatDate(value, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
 }
 
 export function formatNumber(value: number | null | undefined) {

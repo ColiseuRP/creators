@@ -5,20 +5,20 @@ import { getSessionContext } from "@/lib/session";
 
 const benefits = [
   "Destaque dentro da comunidade",
-  "Divulgacao oficial",
+  "Divulgação oficial",
   "Cargo exclusivo no Discord",
-  "Participacao em acoes especiais",
+  "Participação em ações especiais",
   "Reconhecimento como Creator Coliseu",
-  "Espaco proprio para envio de metricas",
+  "Espaço próprio para envio de métricas",
 ];
 
 const requirements = [
   "Ter boa conduta dentro e fora da cidade",
   "Representar bem o Coliseu RP",
-  "Produzir conteudo relacionado a cidade",
+  "Produzir conteúdo relacionado à cidade",
   "Respeitar players, equipe e comunidade",
-  "Manter frequencia de lives, videos ou postagens",
-  "Nao prejudicar a imagem da cidade",
+  "Manter frequência de lives, vídeos ou postagens",
+  "Não prejudicar a imagem da cidade",
 ];
 
 export default async function RulesPage() {
@@ -28,14 +28,14 @@ export default async function RulesPage() {
     <PublicShell actor={actor} activeHref="/regras">
       <section className="page-shell pb-14 pt-10 lg:pb-20 lg:pt-14">
         <div className="surface-card px-6 py-8 lg:px-10 lg:py-10">
-          <p className="eyebrow">Regras e criterios</p>
+          <p className="eyebrow">Regras e critérios</p>
           <h1 className="mt-4 font-display text-5xl font-semibold tracking-tight text-[var(--white)]">
             A arena valoriza quem honra o nome da cidade.
           </h1>
           <p className="mt-5 max-w-3xl text-base leading-8 text-[var(--muted)]">
             Para representar o Coliseu RP como creator oficial, a postura dentro da
-            comunidade pesa tanto quanto a qualidade do conteudo. A equipe analisa
-            frequencia, presenca, responsabilidade e alinhamento com a cidade.
+            comunidade pesa tanto quanto a qualidade do conteúdo. A equipe analisa
+            frequência, presença, responsabilidade e alinhamento com a cidade.
           </p>
         </div>
       </section>
@@ -46,8 +46,8 @@ export default async function RulesPage() {
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-[rgba(245,197,66,0.2)] bg-[rgba(245,197,66,0.08)] text-[var(--gold)]">
               <Crown className="h-5 w-5" />
             </div>
-            <div>
-              <p className="eyebrow">Beneficios</p>
+              <div>
+              <p className="eyebrow">Benefícios</p>
               <h2 className="font-display text-3xl font-semibold text-[var(--white)]">
                 O que o creator conquista
               </h2>
@@ -103,8 +103,8 @@ export default async function RulesPage() {
             </div>
             <p className="mt-4 text-sm leading-8 text-[var(--muted)]">
               O creator oficial do Coliseu RP carrega a imagem da cidade em cada live,
-              video, postagem e interacao com a comunidade. Por isso, a equipe valoriza
-              constancia, maturidade e respeito em todas as frentes.
+              vídeo, postagem e interação com a comunidade. Por isso, a equipe valoriza
+              constância, maturidade e respeito em todas as frentes.
             </p>
           </div>
         </div>

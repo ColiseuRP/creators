@@ -197,8 +197,8 @@ const metricSubmissionsBase: MetricSubmission[] = [
 const noticesBase: CreatorNotice[] = [
   {
     id: "notice-1",
-    title: "Revisao concluida",
-    message: "Sua ultima metrica foi aprovada e ja segue para o fechamento semanal.",
+    title: "Revisão concluída",
+    message: "Sua última métrica foi aprovada e já segue para o fechamento semanal.",
     type: "success",
     target_type: "individual",
     target_creator_id: "creator-1",
@@ -216,7 +216,7 @@ const noticesBase: CreatorNotice[] = [
     id: "notice-2",
     title: "Checklist de abril",
     message:
-      "Todos os creators devem anexar **print do analytics** com data visivel.\n\n*Streamer* e **Influencer** precisam revisar esse ponto.",
+      "Todos os creators devem anexar **print do analytics** com data visível.\n\n*Streamer* e **Influencer** precisam revisar esse ponto.",
     type: "warning",
     target_type: "general",
     target_creator_id: null,
@@ -226,7 +226,7 @@ const noticesBase: CreatorNotice[] = [
     sent_at: "2026-04-25T11:00:00.000Z",
     discord_status: "failed",
     discord_channel_id: "123456789000000003",
-    discord_error_message: "Discord: Missing Access / codigo 50001.",
+    discord_error_message: "Discord: Missing Access / código 50001.",
     discord_last_attempt_at: "2026-04-25T11:00:10.000Z",
     discord_sent_at: null,
   },
@@ -309,7 +309,7 @@ const discordLogsBase: DiscordMessageLog[] = [
     channel_id: "123456789000000003",
     message_type: "notice_general",
     status: "failed",
-    error_message: "Discord: Missing Access / codigo 50001.",
+    error_message: "Discord: Missing Access / código 50001.",
     sent_at: "2026-04-25T11:00:10.000Z",
     attempted_at: "2026-04-25T11:00:10.000Z",
     delivered_at: null,

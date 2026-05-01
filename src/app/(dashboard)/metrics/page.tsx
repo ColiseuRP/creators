@@ -5,16 +5,16 @@ import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getMetrics } from "@/lib/data";
 import { requireSession } from "@/lib/session";
-import { formatDate, formatDuration, formatNumber } from "@/lib/utils";
+import { formatDateOnly, formatDuration, formatNumber } from "@/lib/utils";
 
 function getMetricMessage(status: "pending" | "approved" | "rejected") {
   switch (status) {
     case "approved":
-      return "Metrica aprovada. Continue representando o Coliseu!";
+      return "Métrica aprovada. Continue representando o Coliseu!";
     case "rejected":
-      return "Metrica negada. Verifique o motivo informado pela equipe.";
+      return "Métrica negada. Verifique o motivo informado pela equipe.";
     default:
-      return "Sua metrica esta em analise pela equipe.";
+      return "Sua métrica está em análise pela equipe.";
   }
 }
 
@@ -24,22 +24,22 @@ export default async function MetricsPage() {
 
   return (
     <SectionCard
-      title="Metricas"
+      title="Métricas"
       description={
         actor.role === "creator"
-          ? "Aqui voce acompanha o historico das suas entregas, os prints enviados e os retornos da equipe."
-          : "A equipe acompanha o historico de metricas, confere os anexos e registra cada decisao da central."
+          ? "Aqui você acompanha o histórico das suas entregas, os prints enviados e os retornos da equipe."
+          : "A equipe acompanha o histórico de métricas, confere os anexos e registra cada decisão da central."
       }
     >
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <p className="text-sm text-[var(--muted)]">
           {actor.role === "creator"
-            ? "Voce enxerga apenas as proprias metricas, seus prints e os avisos ligados ao seu caminho."
-            : "Seu papel permite revisar metricas, aprovar ou negar envios e registrar retorno para cada creator."}
+            ? "Você enxerga apenas as próprias métricas, seus prints e os avisos ligados ao seu caminho."
+            : "Seu papel permite revisar métricas, aprovar ou negar envios e registrar retorno para cada creator."}
         </p>
         {actor.role === "creator" ? (
           <Link href="/metrics/new" className="button-gold">
-            Enviar Nova Metrica
+            Enviar Nova Métrica
           </Link>
         ) : null}
       </div>
@@ -59,9 +59,8 @@ export default async function MetricsPage() {
                   <StatusBadge status={metric.status} />
                 </div>
                 <p className="mt-2 text-sm text-[var(--muted)]">
-                  {metric.content_type} /{" "}
-                  {formatDate(metric.content_date, { dateStyle: "medium" })} /{" "}
-                  {formatNumber(metric.views)} views
+                  {metric.content_type} / {formatDateOnly(metric.content_date)} /{" "}
+                  {formatNumber(metric.views)} visualizações
                 </p>
                 <a
                   href={metric.content_url}
@@ -69,21 +68,21 @@ export default async function MetricsPage() {
                   rel="noreferrer"
                   className="mt-3 inline-flex text-sm font-semibold text-[var(--gold)] hover:text-[var(--white)]"
                 >
-                  Abrir conteudo
+                  Abrir conteúdo
                 </a>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:w-[420px]">
                 <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(245,197,66,0.08)] px-4 py-3 text-sm text-[var(--muted)]">
-                  Likes: {formatNumber(metric.likes)}
+                  Curtidas: {formatNumber(metric.likes)}
                 </div>
                 <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
-                  Comentarios: {formatNumber(metric.comments)}
+                  Comentários: {formatNumber(metric.comments)}
                 </div>
                 <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
                   Compart.: {formatNumber(metric.shares)}
                 </div>
                 <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
-                  Live: {formatDuration(metric.live_duration)}
+                  Duração da live: {formatDuration(metric.live_duration)}
                 </div>
               </div>
             </div>
@@ -96,7 +95,7 @@ export default async function MetricsPage() {
 
             {metric.creator_observation ? (
               <div className="mt-4 rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.02)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
-                <span className="font-semibold text-[var(--white)]">Observacao do creator:</span>{" "}
+                <span className="font-semibold text-[var(--white)]">Observação do Creator:</span>{" "}
                 {metric.creator_observation}
               </div>
             ) : null}
@@ -120,7 +119,7 @@ export default async function MetricsPage() {
                       />
                     ) : (
                       <div className="flex h-44 items-center justify-center bg-[rgba(255,255,255,0.03)] text-sm text-[var(--muted)]">
-                        Visual indisponivel
+                        Visual indisponível
                       </div>
                     )}
                     <div className="p-4">
@@ -152,7 +151,7 @@ export default async function MetricsPage() {
 
         {metrics.length === 0 ? (
           <div className="rounded-[24px] border border-dashed border-[rgba(245,197,66,0.18)] bg-[rgba(255,255,255,0.02)] px-4 py-5 text-sm text-[var(--muted)]">
-            Nenhuma metrica foi registrada por aqui ainda.
+            Nenhuma métrica enviada até o momento.
           </div>
         ) : null}
       </div>

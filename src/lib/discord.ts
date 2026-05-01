@@ -1,7 +1,7 @@
 import "server-only";
 
 import { env } from "@/lib/env";
-import type { Creator, MetricSubmission, NoticeType } from "@/lib/types";
+import type { Creator, MetricSubmission, NoticeTargetType, NoticeType } from "@/lib/types";
 
 export interface DiscordSendResult {
   status: "sent" | "failed" | "skipped";
@@ -11,7 +11,7 @@ export interface DiscordSendResult {
 
 function parseDiscordErrorMessage(rawBody: string) {
   if (!rawBody) {
-    return "O Discord nao retornou detalhes sobre a falha.";
+    return "O Discord não retornou detalhes sobre a falha.";
   }
 
   try {
@@ -20,7 +20,7 @@ function parseDiscordErrorMessage(rawBody: string) {
       message?: string;
     };
 
-    const parts = [parsed.message, parsed.code ? `codigo ${parsed.code}` : null].filter(
+    const parts = [parsed.message, parsed.code ? `código ${parsed.code}` : null].filter(
       Boolean,
     );
 
@@ -28,7 +28,7 @@ function parseDiscordErrorMessage(rawBody: string) {
       return `Discord: ${parts.join(" / ")}.`;
     }
   } catch {
-    // Mantem o corpo bruto abaixo quando nao vier em JSON.
+    // Mantém o corpo bruto abaixo quando não vier em JSON.
   }
 
   return rawBody.slice(0, 500);
@@ -40,35 +40,55 @@ export function formatMetricReviewDiscordMessage(
   decision: "approved" | "rejected",
   reason?: string,
 ) {
-  const headline =
-    decision === "approved"
-      ? `Metrica aprovada. Continue representando o Coliseu!`
-      : `Metrica negada. Confira a orientacao da equipe para reenviar.`;
-
-  const reasonLine = reason ? `\nMotivo informado pela equipe: ${reason}` : "";
+  if (decision === "approved") {
+    return [
+      "✅ Métrica aprovada!",
+      "",
+      `Olá, ${creator.name}!`,
+      `Sua métrica referente à plataforma ${metric.platform} foi aprovada pela equipe Creators Coliseu.`,
+      "",
+      `Conteúdo: ${metric.content_url}`,
+      "",
+      "Continue representando o Coliseu RP com qualidade!",
+    ].join("\n");
+  }
 
   return [
-    `Ola, ${creator.name}!`,
-    headline,
-    `Conteudo analisado: ${metric.content_type} em ${metric.platform}.`,
-    reasonLine,
-  ]
-    .join("\n")
-    .trim();
+    "❌ Métrica negada",
+    "",
+    `Olá, ${creator.name}.`,
+    `Sua métrica referente à plataforma ${metric.platform} foi negada pela equipe Creators Coliseu.`,
+    "",
+    `Motivo: ${reason || "Não informado pela equipe."}`,
+    "",
+    "Caso tenha dúvidas, procure o responsável pelos creators.",
+  ].join("\n");
 }
 
 export function formatNoticeDiscordMessage(
+  targetType: NoticeTargetType,
   title: string,
   message: string,
   type: NoticeType,
 ) {
-  const prefixMap: Record<NoticeType, string> = {
-    info: "[Aviso Coliseu]",
-    success: "[Atualizacao Coliseu]",
-    warning: "[Atencao Coliseu]",
+  const headerMap: Record<NoticeTargetType, string> = {
+    general: "📢 Aviso geral — Creators Coliseu",
+    category: "📢 Aviso por categoria — Creators Coliseu",
+    individual: "📌 Aviso para você — Creators Coliseu",
   };
 
-  return `${prefixMap[type]} ${title}\n${message}`;
+  const normalizedMessage = type === "warning" ? message : message;
+
+  return [
+    headerMap[targetType],
+    "",
+    title,
+    "",
+    normalizedMessage,
+    "",
+    "Atenciosamente,",
+    "Equipe Coliseu RP",
+  ].join("\n");
 }
 
 export async function sendDiscordChannelMessage(
@@ -87,7 +107,7 @@ export async function sendDiscordChannelMessage(
     return {
       status: "failed",
       channelId,
-      errorMessage: "A variavel DISCORD_BOT_TOKEN nao foi carregada no servidor.",
+      errorMessage: "O envio para o Discord não está configurado corretamente no momento.",
     };
   }
 

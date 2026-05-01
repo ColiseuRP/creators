@@ -82,7 +82,7 @@ type ServiceClient = NonNullable<ReturnType<typeof createSupabaseServiceRoleClie
 
 function requireCreatorContext(actor: SessionContext) {
   if (!actor.creator) {
-    throw new Error("Creator nao encontrado para a sessao atual.");
+    throw new Error("Creator não encontrado para a sessão atual.");
   }
 
   return actor.creator;
@@ -223,11 +223,11 @@ async function deliverNoticeToDiscord(
   const { channelId } = await resolveNoticeChannel(serviceClient, notice, settings);
   const messageType = getNoticeDiscordMessageType(notice.target_type);
   const { log, attemptedAt } = await insertPendingDiscordLog(serviceClient, {
-    noticeId: notice.id,
-    targetType: notice.target_type,
-    targetCreatorId: notice.target_creator_id ?? null,
-    channelId,
-    messageType,
+      noticeId: notice.id,
+      targetType: notice.target_type,
+      targetCreatorId: notice.target_creator_id ?? null,
+      channelId,
+      messageType,
   });
 
   let result:
@@ -238,12 +238,17 @@ async function deliverNoticeToDiscord(
     result = {
       status: "skipped",
       channelId,
-      errorMessage: "O envio automatico de avisos esta desligado nas configuracoes internas.",
+      errorMessage: "O envio automático de avisos está desativado nas configurações internas.",
     };
   } else {
     result = await sendDiscordChannelMessage(
       channelId,
-      formatNoticeDiscordMessage(notice.title, notice.message, notice.type),
+      formatNoticeDiscordMessage(
+        notice.target_type,
+        notice.title,
+        notice.message,
+        notice.type,
+      ),
     );
   }
 
@@ -277,11 +282,11 @@ export async function uploadMetricAttachment(actor: SessionContext, file: File) 
       file.type as (typeof ACCEPTED_ATTACHMENT_TYPES)[number],
     )
   ) {
-    throw new Error("Formato de arquivo invalido. Envie PNG, JPG, JPEG ou WEBP.");
+    throw new Error("Envie um arquivo nos formatos PNG, JPG, JPEG ou WEBP.");
   }
 
   if (file.size > MAX_ATTACHMENT_SIZE_BYTES) {
-    throw new Error("O arquivo ultrapassa o limite permitido de 5MB.");
+    throw new Error("O arquivo enviado é muito grande.");
   }
 
   if (actor.mockMode) {
@@ -296,7 +301,7 @@ export async function uploadMetricAttachment(actor: SessionContext, file: File) 
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    throw new Error("Nao foi possivel enviar os anexos no momento.");
+    throw new Error("Não foi possível enviar os anexos no momento.");
   }
 
   const storagePath = `${creator.id}/${Date.now()}-${sanitizeFilename(file.name)}`;
@@ -311,7 +316,7 @@ export async function uploadMetricAttachment(actor: SessionContext, file: File) 
     });
 
   if (error) {
-    throw new Error("Nao foi possivel salvar um dos anexos enviados.");
+    throw new Error("Não foi possível salvar um dos anexos enviados.");
   }
 
   return {
@@ -352,7 +357,7 @@ export async function submitMetric(
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    throw new Error("Nao foi possivel registrar a metrica agora.");
+    throw new Error("Não foi possível registrar a métrica agora.");
   }
 
   const { data: metric, error: metricError } = await supabase
@@ -376,7 +381,7 @@ export async function submitMetric(
     .single();
 
   if (metricError || !metric) {
-    throw new Error("Nao foi possivel salvar a metrica.");
+    throw new Error("Não foi possível salvar a métrica.");
   }
 
   if (payload.attachments.length > 0) {
@@ -390,7 +395,7 @@ export async function submitMetric(
     );
 
     if (attachmentError) {
-      throw new Error("A metrica foi registrada, mas houve falha ao vincular os anexos.");
+      throw new Error("A métrica foi registrada, mas houve falha ao vincular os anexos.");
     }
   }
 
@@ -417,7 +422,7 @@ export async function submitCreatorApplication(payload: CreatorApplicationInput)
   const supabase = serviceClient ?? (await createSupabaseServerClient());
 
   if (!supabase) {
-    throw new Error("Nao foi possivel receber sua inscricao agora.");
+    throw new Error("Não foi possível receber sua inscrição agora.");
   }
 
   const { error } = await supabase.from("creator_applications").insert({
@@ -439,7 +444,7 @@ export async function submitCreatorApplication(payload: CreatorApplicationInput)
   });
 
   if (error) {
-    throw new Error("Nao foi possivel enviar sua inscricao agora.");
+    throw new Error("Não foi possível enviar sua inscrição agora.");
   }
 
   revalidatePath("/inscricao");
@@ -453,7 +458,7 @@ export async function submitCreatorApplication(payload: CreatorApplicationInput)
 
 export async function reviewMetric(actor: SessionContext, input: ReviewMetricInput) {
   if (!actor.profile) {
-    throw new Error("Perfil nao encontrado.");
+    throw new Error("Perfil não encontrado.");
   }
 
   if (actor.mockMode) {
@@ -461,14 +466,14 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
       metricId: input.metricId,
       decision: input.decision,
       discordStatus: "skipped",
-      errorMessage: "Demonstracao ativa: nenhuma alteracao foi salva.",
+      errorMessage: "Demonstração ativa: nenhuma alteração foi salva.",
     };
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
 
   if (!serviceClient) {
-    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
+    throw new Error("A configuração interna ainda não está pronta para esta ação.");
   }
 
   const { data: metric } = await serviceClient
@@ -478,13 +483,13 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     .single();
 
   if (!metric) {
-    throw new Error("Metrica nao encontrada.");
+    throw new Error("Métrica não encontrada.");
   }
 
   const creator = await getCreatorChannel(serviceClient, metric.creator_id);
 
   if (!creator) {
-    throw new Error("Creator nao encontrado para a metrica.");
+    throw new Error("Creator não encontrado para a métrica.");
   }
 
   const reviewReason = input.reason?.trim() || null;
@@ -501,7 +506,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
     .eq("id", input.metricId);
 
   if (updateError) {
-    throw new Error("Nao foi possivel concluir a analise da metrica.");
+    throw new Error("Não foi possível concluir a análise da métrica.");
   }
 
   await serviceClient.from("metric_reviews").insert({
@@ -512,11 +517,11 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
   });
 
   await serviceClient.from("creator_notices").insert({
-    title: input.decision === "approved" ? "Metrica aprovada" : "Metrica negada",
+    title: input.decision === "approved" ? "Métrica aprovada" : "Métrica negada",
     message:
       input.decision === "approved"
-        ? reviewReason || "Metrica aprovada. Continue representando o Coliseu!"
-        : reviewReason || "Metrica negada. Verifique o motivo informado pela equipe.",
+        ? reviewReason || "Métrica aprovada. Continue representando o Coliseu!"
+        : reviewReason || "Métrica negada. Verifique o motivo informado pela equipe.",
     type: input.decision === "approved" ? "success" : "warning",
     target_type: "individual",
     target_creator_id: creator.id,
@@ -538,7 +543,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
       ? {
           status: "skipped" as const,
           channelId: creator.discord_channel_id,
-          errorMessage: "O envio automatico de avisos esta desligado nas configuracoes internas.",
+          errorMessage: "O envio automático de avisos está desativado nas configurações internas.",
         }
       : await sendDiscordChannelMessage(
           creator.discord_channel_id,
@@ -573,7 +578,7 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
 
 export async function createNotice(actor: SessionContext, input: NoticeInput) {
   if (!actor.profile) {
-    throw new Error("Perfil nao encontrado.");
+    throw new Error("Perfil não encontrado.");
   }
 
   if (actor.mockMode) {
@@ -587,7 +592,7 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
   const serviceClient = createSupabaseServiceRoleClient();
 
   if (!serviceClient) {
-    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
+    throw new Error("A configuração interna ainda não está pronta para esta ação.");
   }
 
   const { data: notice, error: noticeError } = await serviceClient
@@ -611,7 +616,7 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
     .single();
 
   if (noticeError || !notice) {
-    throw new Error("Nao foi possivel enviar o aviso.");
+    throw new Error("Não foi possível enviar o aviso.");
   }
 
   let discordStatus: "sent" | "failed" | "skipped" | null = null;
@@ -645,21 +650,21 @@ export async function createNotice(actor: SessionContext, input: NoticeInput) {
 
 export async function resendNoticeToDiscord(actor: SessionContext, noticeId: string) {
   if (!actor.profile) {
-    throw new Error("Perfil nao encontrado.");
+    throw new Error("Perfil não encontrado.");
   }
 
   if (actor.mockMode) {
     return {
       noticeId,
       discordStatus: "skipped",
-      errorMessage: "Demonstracao ativa: nenhum envio real foi executado.",
+      errorMessage: "Demonstração ativa: nenhum envio real foi executado.",
     };
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
 
   if (!serviceClient) {
-    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
+    throw new Error("A configuração interna ainda não está pronta para esta ação.");
   }
 
   const { data: notice } = await serviceClient
@@ -669,7 +674,7 @@ export async function resendNoticeToDiscord(actor: SessionContext, noticeId: str
     .single();
 
   if (!notice) {
-    throw new Error("Aviso nao encontrado.");
+    throw new Error("Aviso não encontrado.");
   }
 
   if (!notice.send_to_discord) {
@@ -709,14 +714,14 @@ export async function sendManualDiscordMessage(
   if (actor.mockMode) {
     return {
       status: "skipped",
-      errorMessage: "Demonstracao ativa: nenhuma mensagem real foi enviada.",
+      errorMessage: "Demonstração ativa: nenhuma mensagem real foi enviada.",
     };
   }
 
   const serviceClient = createSupabaseServiceRoleClient();
 
   if (!serviceClient) {
-    throw new Error("A configuracao interna ainda nao esta pronta para esta acao.");
+    throw new Error("A configuração interna ainda não está pronta para esta ação.");
   }
 
   let channelId = input.channelId ?? null;

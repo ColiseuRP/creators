@@ -30,26 +30,26 @@ export function getDiscordMessageTypeLabel(
 ) {
   switch (messageType) {
     case "notice_general":
-      return "Aviso Geral";
+      return "Aviso geral";
     case "notice_category":
-      return "Aviso por Categoria";
+      return "Aviso por categoria";
     case "notice_individual":
       return "Aviso para Creator";
     case "metric_approved":
-      return "Metrica aprovada";
+      return "Métrica aprovada";
     case "metric_rejected":
-      return "Metrica negada";
+      return "Métrica negada";
     default:
       if (targetType === "individual") {
         return "Aviso para Creator";
       }
 
       if (targetType === "category") {
-        return "Aviso por Categoria";
+        return "Aviso por categoria";
       }
 
       if (targetType === "general") {
-        return "Aviso Geral";
+        return "Aviso geral";
       }
 
       return messageType;

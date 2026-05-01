@@ -12,30 +12,30 @@ export default async function ApplyPage() {
       <section className="page-shell pb-14 pt-10 lg:pb-20 lg:pt-14">
         <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="surface-card p-6 lg:p-8">
-            <p className="eyebrow">Inscricao oficial</p>
+            <p className="eyebrow">Inscrição oficial</p>
             <h1 className="mt-4 font-display text-5xl font-semibold tracking-tight text-[var(--white)]">
               Quer representar o Coliseu RP como creator?
             </h1>
             <p className="mt-5 text-base leading-8 text-[var(--muted)]">
-              Envie sua inscricao para analise da equipe. Avaliaremos seu perfil,
-              frequencia de conteudo e postura dentro da comunidade.
+              Envie sua inscrição para análise da equipe. Avaliaremos seu perfil,
+              frequência de conteúdo e postura dentro da comunidade.
             </p>
 
             <div className="mt-8 grid gap-4">
               {[
                 {
-                  title: "Postura e presenca",
-                  text: "A equipe observa sua conduta, sua constancia e a forma como voce representa a cidade.",
+                  title: "Postura e presença",
+                  text: "A equipe observa sua conduta, sua constância e a forma como você representa a cidade.",
                   icon: Shield,
                 },
                 {
-                  title: "Conteudo alinhado",
-                  text: "Seu material precisa conversar com a atmosfera, a historia e os momentos do Coliseu RP.",
+                  title: "Conteúdo alinhado",
+                  text: "Seu material precisa conversar com a atmosfera, a história e os momentos do Coliseu RP.",
                   icon: Swords,
                 },
                 {
                   title: "Destaque oficial",
-                  text: "Creators aprovados ganham visibilidade, espaco proprio e proximidade com a equipe.",
+                  text: "Creators aprovados ganham visibilidade, espaço próprio e proximidade com a equipe.",
                   icon: Trophy,
                 },
               ].map(({ title, text, icon: Icon }) => (
@@ -62,9 +62,9 @@ export default async function ApplyPage() {
                 <Crown className="h-5 w-5" />
               </div>
               <div>
-                <p className="eyebrow">Formulario de entrada</p>
+                <p className="eyebrow">Formulário de entrada</p>
                 <p className="text-sm leading-7 text-[var(--muted)]">
-                  Preencha com calma e mostre por que seu conteudo merece um lugar na arena.
+                  Preencha com calma e mostre por que seu conteúdo merece um lugar na arena.
                 </p>
               </div>
             </div>

@@ -105,10 +105,10 @@ export function MetricSubmissionForm({
       const result = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(result.error ?? "Nao foi possivel registrar a metrica.");
+        throw new Error(result.error ?? "Não foi possível registrar a métrica.");
       }
 
-      setSuccess("Metrica enviada com sucesso. A equipe ira analisar em breve.");
+      setSuccess("Métrica enviada com sucesso. A equipe irá analisar em breve.");
       event.currentTarget.reset();
       files.forEach((file) => URL.revokeObjectURL(file.previewUrl));
       setFiles([]);
@@ -121,7 +121,7 @@ export function MetricSubmissionForm({
       const message =
         submitError instanceof Error
           ? submitError.message
-          : "Falha inesperada ao enviar a metrica.";
+          : "Falha inesperada ao enviar a métrica.";
       setError(message);
     } finally {
       setIsSubmitting(false);
@@ -131,8 +131,8 @@ export function MetricSubmissionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-4 text-sm leading-7 text-[var(--muted)]">
-        Envie os prints e informacoes do seu conteudo para analise da equipe
-        responsavel. Quanto mais claro o envio, melhor para o fechamento da sua
+        Envie os prints e as informações do seu conteúdo para análise da equipe
+        responsável. Quanto mais claro o envio, melhor para o fechamento da sua
         entrega.
       </div>
 
@@ -148,17 +148,17 @@ export function MetricSubmissionForm({
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Tipo de conteudo</span>
+          <span>Tipo de conteúdo</span>
           <input
             name="contentType"
             required
-            placeholder="Live, short, video..."
+            placeholder="Live, short, vídeo..."
             className="field-input"
           />
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)] md:col-span-2">
-          <span>URL do conteudo</span>
+          <span>URL do conteúdo</span>
           <input
             name="contentUrl"
             type="url"
@@ -169,22 +169,22 @@ export function MetricSubmissionForm({
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Data do conteudo</span>
+          <span>Data do conteúdo</span>
           <input name="contentDate" type="date" required className="field-input" />
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Views</span>
+          <span>Visualizações</span>
           <input name="views" type="number" min="0" required className="field-input" />
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Likes</span>
+          <span>Curtidas</span>
           <input name="likes" type="number" min="0" required className="field-input" />
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Comentarios</span>
+          <span>Comentários</span>
           <input name="comments" type="number" min="0" required className="field-input" />
         </label>
 
@@ -194,7 +194,7 @@ export function MetricSubmissionForm({
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Media de viewers</span>
+          <span>Média de viewers</span>
           <input
             name="averageViewers"
             type="number"
@@ -205,7 +205,7 @@ export function MetricSubmissionForm({
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
-          <span>Duracao da live (horas)</span>
+          <span>Duração da live (horas)</span>
           <input
             name="liveDuration"
             type="number"
@@ -218,7 +218,7 @@ export function MetricSubmissionForm({
       </div>
 
       <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-        <span>Observacao do creator</span>
+        <span>Observação do Creator</span>
         <textarea
           name="creatorObservation"
           rows={4}
@@ -231,10 +231,10 @@ export function MetricSubmissionForm({
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="font-display text-xl font-semibold tracking-tight text-[var(--white)]">
-              Prints das metricas
+              Prints das métricas
             </p>
             <p className="text-sm leading-7 text-[var(--muted)]">
-              PNG, JPG, JPEG ou WEBP, ate {formatNumber(MAX_ATTACHMENT_SIZE_BYTES / 1024 / 1024)}MB por arquivo.
+              PNG, JPG, JPEG ou WEBP, até {formatNumber(MAX_ATTACHMENT_SIZE_BYTES / 1024 / 1024)}MB por arquivo.
             </p>
           </div>
 
@@ -317,7 +317,7 @@ export function MetricSubmissionForm({
         ) : (
           <SendHorizonal className="mr-2 h-4 w-4" />
         )}
-        <span>{isSubmitting ? "Enviando..." : "Enviar metrica para analise"}</span>
+        <span>{isSubmitting ? "Enviando..." : "Enviar métrica para análise"}</span>
       </button>
     </form>
   );

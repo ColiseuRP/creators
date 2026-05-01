@@ -26,9 +26,9 @@ export function DiscordLogCard({
             {getDiscordMessageTypeLabel(log.message_type, log.target_type)}
           </p>
           <div className="space-y-1 text-xs leading-6 text-[var(--muted)]">
-            <p>Canal de destino: {log.channel_id || "nao definido"}</p>
+            <p>Canal de destino: {log.channel_id || "Não definido"}</p>
             <p>Tentativa: {formatDate(attemptedAt)}</p>
-            {deliveredAt ? <p>Envio concluido: {formatDate(deliveredAt)}</p> : null}
+            {deliveredAt ? <p>Envio concluído: {formatDate(deliveredAt)}</p> : null}
           </div>
         </div>
 
@@ -45,7 +45,7 @@ export function DiscordLogCard({
 
       {log.error_message ? (
         <p className="mt-4 rounded-2xl border border-[rgba(139,30,30,0.4)] bg-[rgba(139,30,30,0.2)] px-4 py-3 text-sm leading-6 text-[#ffd0d0]">
-          {log.error_message}
+          <span className="font-semibold">Motivo da falha:</span> {log.error_message}
         </p>
       ) : null}
     </article>
