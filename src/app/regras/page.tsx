@@ -213,6 +213,8 @@ const importantRules = [
   "O creator deve representar o Coliseu RP com responsabilidade",
 ];
 
+const requirementsShell = "mx-auto w-full max-w-[1560px] px-4 sm:px-5 lg:px-8";
+
 function TrendingUpIcon(props: ComponentProps<"svg">) {
   return (
     <svg
@@ -256,13 +258,22 @@ function BulletList({
   title,
   items,
   icon: Icon,
+  className,
 }: {
   title: string;
   items: readonly string[];
   icon: LucideIcon;
+  className?: string;
 }) {
   return (
-    <div className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
+    <div
+      className={[
+        "rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5 lg:p-6",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
+    >
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[rgba(245,197,66,0.18)] bg-[rgba(245,197,66,0.08)] text-[var(--gold)]">
           <Icon className="h-4 w-4" />
@@ -303,34 +314,42 @@ function RankCard({
   return (
     <article
       className={[
-        "rounded-[30px] border p-6 shadow-[var(--shadow)] backdrop-blur-xl lg:p-7",
+        "rounded-[32px] border p-6 shadow-[var(--shadow)] backdrop-blur-xl lg:p-8 xl:p-9",
         accent,
       ].join(" ")}
     >
-      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-        <div className="flex items-start gap-4">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div className="flex items-start gap-4 lg:gap-5">
           <div
             className={[
-              "flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] border text-[var(--gold)]",
+              "flex h-14 w-14 shrink-0 items-center justify-center rounded-[20px] border text-[var(--gold)] lg:h-16 lg:w-16",
               featured
                 ? "border-[rgba(245,197,66,0.34)] bg-[rgba(245,197,66,0.12)] shadow-[0_0_24px_rgba(245,197,66,0.12)]"
                 : "border-[rgba(245,197,66,0.18)] bg-[rgba(245,197,66,0.08)]",
             ].join(" ")}
           >
-            <Icon className="h-6 w-6" />
+            <Icon className="h-6 w-6 lg:h-7 lg:w-7" />
           </div>
 
-          <h3 className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
-            {title}
-          </h3>
+          <div>
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+              <h3 className="font-display text-2xl font-semibold tracking-tight text-[var(--white)] lg:text-3xl">
+                {title}
+              </h3>
+              <Pill className={badgeClassName}>{badge}</Pill>
+            </div>
+          </div>
         </div>
-
-        <Pill className={badgeClassName}>{badge}</Pill>
       </div>
 
-      <div className="mt-5 grid gap-4 md:grid-cols-2">
+      <div
+        className={[
+          "mt-6 grid gap-4",
+          duration ? "lg:grid-cols-[240px_minmax(0,1fr)]" : "lg:grid-cols-1",
+        ].join(" ")}
+      >
         {duration ? (
-          <div className="rounded-[24px] border border-[rgba(245,197,66,0.14)] bg-[rgba(245,197,66,0.08)] p-4">
+          <div className="rounded-[24px] border border-[rgba(245,197,66,0.14)] bg-[rgba(245,197,66,0.08)] p-5">
             <div className="flex items-center gap-3">
               <Clock3 className="h-4.5 w-4.5 text-[var(--gold)]" />
               <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--gold)]">
@@ -345,7 +364,7 @@ function RankCard({
 
         <div
           className={[
-            "rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-4",
+            "rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5",
             duration ? "" : "md:col-span-2",
           ]
             .filter(Boolean)
@@ -357,24 +376,31 @@ function RankCard({
               Objetivo
             </p>
           </div>
-          <p className="mt-3 text-sm leading-7 text-[var(--muted)]">{objective}</p>
+          <p className="mt-3 text-sm leading-8 text-[var(--muted)] lg:text-[15px]">
+            {objective}
+          </p>
         </div>
       </div>
 
       {note ? (
-        <div className="mt-5 rounded-[24px] border border-[rgba(139,30,30,0.42)] bg-[linear-gradient(180deg,rgba(139,30,30,0.22),rgba(39,10,10,0.34))] px-5 py-4">
+        <div className="mt-6 rounded-[24px] border border-[rgba(139,30,30,0.42)] bg-[linear-gradient(180deg,rgba(139,30,30,0.22),rgba(39,10,10,0.34))] px-5 py-4 lg:px-6">
           <div className="flex items-start gap-3">
             <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-[#ffb8b8]" />
             <div>
               <p className="text-sm font-semibold text-[#ffe1e1]">Observação importante</p>
-              <p className="mt-2 text-sm leading-7 text-[#ffd2d2]">{note}</p>
+              <p className="mt-2 text-sm leading-8 text-[#ffd2d2] lg:text-[15px]">{note}</p>
             </div>
           </div>
         </div>
       ) : null}
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-3">
-        <BulletList title="Requisitos" items={requirements} icon={CheckCircle2} />
+      <div className="mt-6 grid gap-4 lg:grid-cols-2 2xl:grid-cols-[1.18fr_0.88fr_1fr] 2xl:items-start">
+        <BulletList
+          title="Requisitos"
+          items={requirements}
+          icon={CheckCircle2}
+          className="lg:col-span-2 2xl:col-span-1"
+        />
         <BulletList title={goalTitle} items={goals} icon={Sparkles} />
         <BulletList title="Benefícios" items={benefits} icon={Crown} />
       </div>
@@ -387,7 +413,7 @@ export default async function RulesPage() {
 
   return (
     <PublicShell actor={actor} activeHref="/regras">
-      <section className="page-shell pb-12 pt-10 lg:pb-16 lg:pt-14">
+      <section className={`${requirementsShell} pb-12 pt-10 lg:pb-16 lg:pt-14`}>
         <div className="surface-card gold-frame overflow-hidden px-6 py-8 lg:px-10 lg:py-10">
           <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
             <div>
@@ -450,7 +476,7 @@ export default async function RulesPage() {
         </div>
       </section>
 
-      <section className="page-shell pb-12">
+      <section className={`${requirementsShell} pb-12`}>
         <div className="surface-card p-6 lg:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -514,7 +540,7 @@ export default async function RulesPage() {
         </div>
       </section>
 
-      <section className="page-shell pb-12">
+      <section className={`${requirementsShell} pb-12`}>
         <div className="surface-card-strong p-6 lg:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
@@ -539,7 +565,7 @@ export default async function RulesPage() {
             </Pill>
           </div>
 
-          <div className="mt-8 rounded-[28px] border border-[rgba(245,197,66,0.16)] bg-[rgba(255,255,255,0.03)] p-5 lg:p-6">
+          <div className="mt-8 rounded-[30px] border border-[rgba(245,197,66,0.16)] bg-[rgba(255,255,255,0.03)] p-5 lg:p-6 xl:p-8">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[rgba(245,197,66,0.2)] bg-[rgba(245,197,66,0.08)] text-[var(--gold)]">
                 <Trophy className="h-5 w-5" />
@@ -553,7 +579,7 @@ export default async function RulesPage() {
               </div>
             </div>
 
-            <div className="mt-6 grid gap-6 2xl:grid-cols-2">
+            <div className="mt-7 space-y-6">
               {ranks.map((rank) => (
                 <RankCard key={rank.title} {...rank} />
               ))}
@@ -562,7 +588,7 @@ export default async function RulesPage() {
         </div>
       </section>
 
-      <section className="page-shell pb-12">
+      <section className={`${requirementsShell} pb-12`}>
         <div className="rounded-[30px] border border-[rgba(139,30,30,0.42)] bg-[linear-gradient(180deg,rgba(63,13,13,0.46),rgba(20,9,8,0.94))] p-6 shadow-[var(--shadow)] lg:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
@@ -598,7 +624,7 @@ export default async function RulesPage() {
         </div>
       </section>
 
-      <section className="page-shell pb-16">
+      <section className={`${requirementsShell} pb-16`}>
         <div className="surface-card gold-frame overflow-hidden px-6 py-8 lg:px-10 lg:py-10">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="max-w-3xl">
