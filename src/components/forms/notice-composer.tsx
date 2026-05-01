@@ -4,6 +4,10 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { LoaderCircle, Megaphone } from "lucide-react";
 
+import {
+  ColiseuSelect,
+  type ColiseuSelectOption,
+} from "@/components/forms/coliseu-select";
 import type { Creator } from "@/lib/types";
 
 interface NoticeComposerProps {
@@ -36,6 +40,63 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
   const categories = useMemo(
     () => Array.from(new Set(creators.map((creator) => creator.category))).sort(),
     [creators],
+  );
+  const targetTypeOptions = useMemo<ColiseuSelectOption[]>(
+    () => [
+      {
+        value: "general",
+        label: "Aviso geral",
+        description: "Envia o aviso para toda a arena de creators.",
+      },
+      {
+        value: "category",
+        label: "Aviso por categoria",
+        description: "Direciona o aviso para uma categoria específica.",
+      },
+      {
+        value: "individual",
+        label: "Aviso individual",
+        description: "Entrega o aviso para um creator específico.",
+      },
+    ],
+    [],
+  );
+  const toneOptions = useMemo<ColiseuSelectOption[]>(
+    () => [
+      {
+        value: "info",
+        label: "Informativo",
+        description: "Comunicação neutra para orientar a equipe.",
+      },
+      {
+        value: "success",
+        label: "Destaque",
+        description: "Mensagem positiva com reconhecimento ou avanço.",
+      },
+      {
+        value: "warning",
+        label: "Atenção",
+        description: "Aviso importante que pede cuidado ou ajuste.",
+      },
+    ],
+    [],
+  );
+  const creatorOptions = useMemo<ColiseuSelectOption[]>(
+    () =>
+      creators.map((creator) => ({
+        value: creator.id,
+        label: creator.name,
+        description: creator.category,
+      })),
+    [creators],
+  );
+  const categoryOptions = useMemo<ColiseuSelectOption[]>(
+    () =>
+      categories.map((category) => ({
+        value: category,
+        label: category,
+      })),
+    [categories],
   );
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -117,70 +178,50 @@ export function NoticeComposer({ creators }: NoticeComposerProps) {
       <div className="grid gap-4 md:grid-cols-2">
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Destino</span>
-          <select
+          <ColiseuSelect
             value={targetType}
-            onChange={(event) =>
-              setTargetType(event.target.value as "individual" | "general" | "category")
+            onChange={(nextValue) =>
+              setTargetType(nextValue as "individual" | "general" | "category")
             }
-            className="field-input"
-          >
-            <option value="general">Aviso geral</option>
-            <option value="category">Aviso por categoria</option>
-            <option value="individual">Aviso individual</option>
-          </select>
+            options={targetTypeOptions}
+          />
         </label>
 
         <label className="space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Tom do aviso</span>
-          <select
+          <ColiseuSelect
             value={type}
-            onChange={(event) =>
-              setType(event.target.value as "info" | "success" | "warning")
+            onChange={(nextValue) =>
+              setType(nextValue as "info" | "success" | "warning")
             }
-            className="field-input"
-          >
-            <option value="info">Informativo</option>
-            <option value="success">Destaque</option>
-            <option value="warning">Atenção</option>
-          </select>
+            options={toneOptions}
+          />
         </label>
       </div>
 
       {targetType === "individual" ? (
         <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Creator de destino</span>
-          <select
+          <ColiseuSelect
             value={targetCreatorId}
-            onChange={(event) => setTargetCreatorId(event.target.value)}
+            onChange={setTargetCreatorId}
+            options={creatorOptions}
+            placeholder="Selecione um creator"
             required
-            className="field-input"
-          >
-            <option value="">Selecione um creator</option>
-            {creators.map((creator) => (
-              <option key={creator.id} value={creator.id}>
-                {creator.name} / {creator.category}
-              </option>
-            ))}
-          </select>
+          />
         </label>
       ) : null}
 
       {targetType === "category" ? (
         <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
           <span>Categoria de destino</span>
-          <select
+          <ColiseuSelect
             value={targetCategory}
-            onChange={(event) => setTargetCategory(event.target.value)}
+            onChange={setTargetCategory}
+            options={categoryOptions}
+            placeholder="Selecione uma categoria"
             required
-            className="field-input"
-          >
-            <option value="">Selecione uma categoria</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+          />
         </label>
       ) : null}
 
