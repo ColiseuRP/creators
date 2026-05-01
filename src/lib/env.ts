@@ -9,6 +9,13 @@ const envSchema = z
     DISCORD_GUILD_ID: z.string().min(1).optional(),
     DISCORD_CREATORS_CATEGORY_ID: z.string().min(1).optional(),
     DISCORD_GENERAL_CREATORS_CHANNEL_ID: z.string().min(1).optional(),
+    DISCORD_RULES_CHANNEL_ID: z.string().min(1).optional(),
+    DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID: z.string().min(1).optional(),
+    DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID: z.string().min(1).optional(),
+    DISCORD_TICKET_CHANNEL_ID: z.string().min(1).optional(),
+    DISCORD_PUNISHMENTS_CHANNEL_ID: z.string().min(1).optional(),
+    DISCORD_NOTICES_CHANNEL_ID: z.string().min(1).optional(),
+    DISCORD_LOGOS_CHANNEL_ID: z.string().min(1).optional(),
   })
   .passthrough();
 
@@ -24,6 +31,15 @@ export const env = {
   DISCORD_GUILD_ID: rawEnv.DISCORD_GUILD_ID,
   DISCORD_CREATORS_CATEGORY_ID: rawEnv.DISCORD_CREATORS_CATEGORY_ID,
   DISCORD_GENERAL_CREATORS_CHANNEL_ID: rawEnv.DISCORD_GENERAL_CREATORS_CHANNEL_ID,
+  DISCORD_RULES_CHANNEL_ID: rawEnv.DISCORD_RULES_CHANNEL_ID,
+  DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID:
+    rawEnv.DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID,
+  DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID:
+    rawEnv.DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID,
+  DISCORD_TICKET_CHANNEL_ID: rawEnv.DISCORD_TICKET_CHANNEL_ID,
+  DISCORD_PUNISHMENTS_CHANNEL_ID: rawEnv.DISCORD_PUNISHMENTS_CHANNEL_ID,
+  DISCORD_NOTICES_CHANNEL_ID: rawEnv.DISCORD_NOTICES_CHANNEL_ID,
+  DISCORD_LOGOS_CHANNEL_ID: rawEnv.DISCORD_LOGOS_CHANNEL_ID,
 };
 
 export const SUPABASE_STORAGE_BUCKET = "metric-attachments";
@@ -46,8 +62,9 @@ export const isDiscordCreatorsCategoryConfigured = Boolean(
   env.DISCORD_CREATORS_CATEGORY_ID,
 );
 export const isDiscordGeneralChannelConfigured = Boolean(
-  env.DISCORD_GENERAL_CREATORS_CHANNEL_ID,
+  env.DISCORD_GENERAL_CREATORS_CHANNEL_ID || env.DISCORD_NOTICES_CHANNEL_ID,
 );
+export const isDiscordNoticesChannelConfigured = Boolean(env.DISCORD_NOTICES_CHANNEL_ID);
 
 export const isDiscordConfigured = Boolean(
   isDiscordBotTokenConfigured &&

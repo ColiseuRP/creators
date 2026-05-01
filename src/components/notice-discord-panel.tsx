@@ -1,5 +1,6 @@
 import { ResendNoticeButton } from "@/components/forms/resend-notice-button";
 import { StatusBadge } from "@/components/status-badge";
+import { getDiscordChannelLabelById } from "@/lib/discord-channels";
 import { getDiscordStatusLabel } from "@/lib/discord-presenter";
 import type { CreatorNotice, DiscordLogStatus } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
@@ -38,6 +39,12 @@ export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
     null;
   const deliveredAt =
     notice.latest_discord_log?.delivered_at ?? notice.discord_sent_at ?? null;
+  const channelLabel = getDiscordChannelLabelById(channelId);
+  const channelDestination = channelId
+    ? channelLabel
+      ? `${channelLabel} (${channelId})`
+      : channelId
+    : "Não definido";
 
   return (
     <div className="mt-4 rounded-[22px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.02)] p-4">
@@ -45,7 +52,7 @@ export function NoticeDiscordPanel({ notice }: { notice: CreatorNotice }) {
         <div className="space-y-2 text-xs leading-6 text-[var(--muted)]">
           <div className="flex flex-wrap items-center gap-3">
             <StatusBadge status={status} label={getDiscordStatusLabel(status)} />
-            <span>Canal: {channelId || "Não definido"}</span>
+            <span>Canal: {channelDestination}</span>
           </div>
           {attemptedAt ? <p>Última tentativa: {formatDate(attemptedAt)}</p> : null}
           {deliveredAt ? <p>Envio concluído: {formatDate(deliveredAt)}</p> : null}

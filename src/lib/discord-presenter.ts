@@ -35,6 +35,24 @@ export function getDiscordMessageTypeLabel(
       return "Aviso por categoria";
     case "notice_individual":
       return "Aviso para Creator";
+    case "rules_update":
+      return "Atualização de regras";
+    case "influencer_requirements":
+      return "Requisitos dos influencers";
+    case "streamer_requirements":
+      return "Requisitos dos streamers";
+    case "ticket_guidance":
+    case "support_ticket":
+      return "Orientação de ticket";
+    case "punishment_notice":
+    case "punishment_record":
+    case "creator_warning":
+      return "Aviso disciplinar";
+    case "creator_removed":
+      return "Remoção do programa";
+    case "logo_delivery":
+    case "brand_asset":
+      return "Material visual";
     case "metric_approved":
       return "Métrica aprovada";
     case "metric_rejected":

@@ -89,6 +89,13 @@ DISCORD_BOT_TOKEN=
 DISCORD_GUILD_ID=
 DISCORD_CREATORS_CATEGORY_ID=
 DISCORD_GENERAL_CREATORS_CHANNEL_ID=
+DISCORD_RULES_CHANNEL_ID=
+DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID=
+DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID=
+DISCORD_TICKET_CHANNEL_ID=
+DISCORD_PUNISHMENTS_CHANNEL_ID=
+DISCORD_NOTICES_CHANNEL_ID=
+DISCORD_LOGOS_CHANNEL_ID=
 ```
 
 Regras importantes:
@@ -97,6 +104,23 @@ Regras importantes:
 - `SUPABASE_SERVICE_ROLE_KEY` deve existir apenas no backend.
 - `DISCORD_BOT_TOKEN` deve existir apenas no backend.
 - Nunca exponha `SUPABASE_SERVICE_ROLE_KEY` ou `DISCORD_BOT_TOKEN` no navegador.
+
+Variáveis do Discord:
+
+- `DISCORD_GUILD_ID`: ID do servidor principal do Discord.
+- `DISCORD_CREATORS_CATEGORY_ID`: categoria onde ficam as salas dos creators.
+- `DISCORD_GENERAL_CREATORS_CHANNEL_ID`: compatibilidade com a configuração antiga de avisos gerais.
+- `DISCORD_RULES_CHANNEL_ID`: canal destinado às regras gerais do programa.
+- `DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID`: canal com os requisitos oficiais dos Influencers Coliseu.
+- `DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID`: canal com os requisitos oficiais do Programa de Streamers Coliseu.
+- `DISCORD_TICKET_CHANNEL_ID`: canal usado para orientar abertura de ticket e suporte.
+- `DISCORD_PUNISHMENTS_CHANNEL_ID`: canal para advertências, punições e remoções do programa.
+- `DISCORD_NOTICES_CHANNEL_ID`: canal principal de avisos gerais dos creators.
+- `DISCORD_LOGOS_CHANNEL_ID`: canal para logos, artes e materiais visuais.
+
+Observação:
+
+- Quando `DISCORD_GENERAL_CREATORS_CHANNEL_ID` não estiver preenchido, o sistema usa `DISCORD_NOTICES_CHANNEL_ID` como fallback para avisos gerais.
 
 Na Vercel:
 
@@ -164,6 +188,7 @@ Não é necessário `vercel.json` extra para este caso; o projeto já usa o flux
 - Sessão do usuário comum usa a chave pública (`anon key`) via Supabase SSR.
 - Operações privilegiadas usam `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor.
 - Integração com Discord acontece exclusivamente no backend.
+- Os IDs de canais do Discord ficam apenas no ambiente do servidor e são resolvidos por finalidade antes de cada envio.
 
 ## API Routes criadas
 

@@ -59,6 +59,18 @@ export const discordMessageSchema = z.object({
   targetType: z.enum(["individual", "general"]),
   targetCreatorId: z.string().optional(),
   channelId: z.string().optional(),
+  channelPurpose: z
+    .enum([
+      "rules",
+      "influencer_requirements",
+      "streamer_requirements",
+      "ticket",
+      "punishments",
+      "notices",
+      "logos",
+      "general_creators",
+    ])
+    .optional(),
   messageType: z.string().trim().min(2),
   content: z.string().trim().min(3),
 });

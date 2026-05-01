@@ -94,12 +94,17 @@ export function formatNoticeDiscordMessage(
 export async function sendDiscordChannelMessage(
   channelId: string | null,
   content: string,
+  options?: {
+    missingChannelMessage?: string;
+  },
 ): Promise<DiscordSendResult> {
   if (!channelId) {
     return {
       status: "failed",
       channelId: null,
-      errorMessage: "Nenhum canal de destino foi configurado para este envio.",
+      errorMessage:
+        options?.missingChannelMessage ??
+        "Nenhum canal de destino foi configurado para este envio.",
     };
   }
 

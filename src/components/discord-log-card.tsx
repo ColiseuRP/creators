@@ -1,5 +1,6 @@
 import { ResendNoticeButton } from "@/components/forms/resend-notice-button";
 import { StatusBadge } from "@/components/status-badge";
+import { getDiscordChannelLabelById } from "@/lib/discord-channels";
 import {
   canResendDiscordNotice,
   getDiscordMessageTypeLabel,
@@ -17,6 +18,12 @@ export function DiscordLogCard({
 }) {
   const attemptedAt = log.attempted_at ?? log.sent_at;
   const deliveredAt = log.delivered_at ?? (log.status === "sent" ? log.sent_at : null);
+  const channelLabel = getDiscordChannelLabelById(log.channel_id);
+  const channelDestination = log.channel_id
+    ? channelLabel
+      ? `${channelLabel} (${log.channel_id})`
+      : log.channel_id
+    : "Não definido";
 
   return (
     <article className="rounded-[24px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-4">
@@ -26,7 +33,7 @@ export function DiscordLogCard({
             {getDiscordMessageTypeLabel(log.message_type, log.target_type)}
           </p>
           <div className="space-y-1 text-xs leading-6 text-[var(--muted)]">
-            <p>Canal de destino: {log.channel_id || "Não definido"}</p>
+            <p>Canal de destino: {channelDestination}</p>
             <p>Tentativa: {formatDate(attemptedAt)}</p>
             {deliveredAt ? <p>Envio concluído: {formatDate(deliveredAt)}</p> : null}
           </div>

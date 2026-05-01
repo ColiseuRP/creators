@@ -12,6 +12,11 @@ import {
   formatNoticeDiscordMessage,
   sendDiscordChannelMessage,
 } from "@/lib/discord";
+import {
+  getDiscordChannelIdForPurpose,
+  getDiscordChannelPurposeForMessageType,
+  getDiscordMissingChannelMessage,
+} from "@/lib/discord-channels";
 import { getNoticeDiscordMessageType } from "@/lib/discord-presenter";
 import {
   createSupabaseServerClient,
@@ -49,6 +54,15 @@ interface ManualDiscordMessageInput {
   targetType: "individual" | "general";
   targetCreatorId?: string | null;
   channelId?: string | null;
+  channelPurpose?:
+    | "rules"
+    | "influencer_requirements"
+    | "streamer_requirements"
+    | "ticket"
+    | "punishments"
+    | "notices"
+    | "logos"
+    | "general_creators";
   messageType: string;
   content: string;
 }
@@ -206,12 +220,15 @@ async function resolveNoticeChannel(
     return {
       creator,
       channelId: creator?.discord_channel_id ?? null,
+      missingChannelMessage:
+        "O creator ainda não possui uma sala configurada no Discord.",
     };
   }
 
   return {
     creator: null,
-    channelId: settings?.general_creators_channel_id ?? null,
+    channelId: getDiscordChannelIdForPurpose("notices", settings),
+    missingChannelMessage: getDiscordMissingChannelMessage("notices"),
   };
 }
 
@@ -220,14 +237,18 @@ async function deliverNoticeToDiscord(
   notice: CreatorNotice,
 ) {
   const settings = await getLatestDiscordSettings(serviceClient);
-  const { channelId } = await resolveNoticeChannel(serviceClient, notice, settings);
+  const { channelId, missingChannelMessage } = await resolveNoticeChannel(
+    serviceClient,
+    notice,
+    settings,
+  );
   const messageType = getNoticeDiscordMessageType(notice.target_type);
   const { log, attemptedAt } = await insertPendingDiscordLog(serviceClient, {
-      noticeId: notice.id,
-      targetType: notice.target_type,
-      targetCreatorId: notice.target_creator_id ?? null,
-      channelId,
-      messageType,
+    noticeId: notice.id,
+    targetType: notice.target_type,
+    targetCreatorId: notice.target_creator_id ?? null,
+    channelId,
+    messageType,
   });
 
   let result:
@@ -249,6 +270,9 @@ async function deliverNoticeToDiscord(
         notice.message,
         notice.type,
       ),
+      {
+        missingChannelMessage,
+      },
     );
   }
 
@@ -553,6 +577,10 @@ export async function reviewMetric(actor: SessionContext, input: ReviewMetricInp
             input.decision,
             reviewReason ?? undefined,
           ),
+          {
+            missingChannelMessage:
+              "O creator ainda não possui uma sala configurada no Discord.",
+          },
         );
 
   await finalizeDiscordLog(serviceClient, log?.id, {
@@ -725,15 +753,23 @@ export async function sendManualDiscordMessage(
   }
 
   let channelId = input.channelId ?? null;
+  let missingChannelMessage: string | undefined;
 
   if (input.targetType === "individual" && input.targetCreatorId) {
     const creator = await getCreatorChannel(serviceClient, input.targetCreatorId);
     channelId = creator?.discord_channel_id ?? null;
+    missingChannelMessage = "O creator ainda não possui uma sala configurada no Discord.";
   }
 
   if (input.targetType === "general" && !channelId) {
     const settings = await getLatestDiscordSettings(serviceClient);
-    channelId = settings?.general_creators_channel_id ?? null;
+    const resolvedPurpose =
+      input.channelPurpose ??
+      getDiscordChannelPurposeForMessageType(input.messageType) ??
+      "notices";
+
+    channelId = getDiscordChannelIdForPurpose(resolvedPurpose, settings);
+    missingChannelMessage = getDiscordMissingChannelMessage(resolvedPurpose);
   }
 
   const { log } = await insertPendingDiscordLog(serviceClient, {
@@ -743,7 +779,9 @@ export async function sendManualDiscordMessage(
     messageType: input.messageType,
   });
 
-  const result = await sendDiscordChannelMessage(channelId, input.content);
+  const result = await sendDiscordChannelMessage(channelId, input.content, {
+    missingChannelMessage,
+  });
 
   await finalizeDiscordLog(serviceClient, log?.id, {
     channelId: result.channelId,
