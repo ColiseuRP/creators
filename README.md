@@ -1,4 +1,4 @@
-# Creators Hub
+# Creators Coliseu
 
 Painel operacional para creators, admins e responsáveis, pronto para deploy na Vercel com:
 
@@ -127,6 +127,7 @@ Na Vercel:
 1. Abra o projeto.
 2. Vá em `Settings > Environment Variables`.
 3. Cadastre todas as variáveis acima para `Production`, `Preview` e, se quiser, `Development`.
+4. Depois de alterar qualquer variável, faça um novo deploy para que o ambiente atualizado seja aplicado.
 
 ## 6. Como rodar o projeto localmente
 
@@ -178,6 +179,14 @@ Esse fallback existe só para desenvolvimento. Em produção, o deploy deve usar
 
 Não é necessário `vercel.json` extra para este caso; o projeto já usa o fluxo padrão de Next.js compatível com a Vercel.
 
+## 8. Como preparar o primeiro administrador
+
+1. No `Authentication > Users` do Supabase, crie o usuário com o e-mail `diretorsnow@coliseurp.br`.
+2. Defina a senha diretamente no Supabase Auth. Não existe senha fixa no código.
+3. Depois de criar o usuário, execute o script [supabase/seeds/initial_admin.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/seeds/initial_admin.sql).
+4. O script promove o perfil para `admin_general`, que é o papel interno equivalente ao Admin Geral da interface.
+5. Após isso, o login desse usuário será direcionado para a Central de Creators.
+
 ## Auth, backend e segurança
 
 - Login: Supabase Auth com email/senha.
@@ -189,6 +198,8 @@ Não é necessário `vercel.json` extra para este caso; o projeto já usa o flux
 - Operações privilegiadas usam `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor.
 - Integração com Discord acontece exclusivamente no backend.
 - Os IDs de canais do Discord ficam apenas no ambiente do servidor e são resolvidos por finalidade antes de cada envio.
+- Após o login, o sistema valida o `profile` do usuário antes de liberar a área correta.
+- Usuário autenticado sem `profile`, com papel inválido ou com cadastro incompleto volta para a tela de login com mensagem amigável.
 
 ## API Routes criadas
 
@@ -230,5 +241,3 @@ npm run build
 npm run start
 npm run lint
 ```
-# creatorscoliseu
-# creators

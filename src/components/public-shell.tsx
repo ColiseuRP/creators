@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import { ColiseuLogo } from "@/components/coliseu-logo";
+import { getRoleHomePath } from "@/lib/permissions";
 import type { SessionContext } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +20,7 @@ const links = [
 ] as const;
 
 function getAreaLink(actor: SessionContext) {
-  if (!actor.user || !actor.profile) {
+  if (!actor.user || !actor.profile || !actor.role) {
     return {
       href: "/login",
       label: "Entrar",
@@ -27,7 +28,7 @@ function getAreaLink(actor: SessionContext) {
   }
 
   return {
-    href: actor.role === "creator" ? "/room" : "/dashboard",
+    href: getRoleHomePath(actor.role),
     label: actor.role === "creator" ? "Sala do Creator" : "Central de Creators",
   };
 }

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { env } from "@/lib/env";
+import { getServerEnvValue } from "@/lib/server-env";
 import type { DiscordSettings } from "@/lib/types";
 
 export type DiscordChannelPurpose =
@@ -31,8 +31,8 @@ function normalizeChannelId(value?: string | null) {
 
 export function getDiscordNoticeChannelId(settings?: DiscordSettings | null) {
   return (
-    normalizeChannelId(env.DISCORD_NOTICES_CHANNEL_ID) ??
-    normalizeChannelId(env.DISCORD_GENERAL_CREATORS_CHANNEL_ID) ??
+    normalizeChannelId(getServerEnvValue("DISCORD_NOTICES_CHANNEL_ID")) ??
+    normalizeChannelId(getServerEnvValue("DISCORD_GENERAL_CREATORS_CHANNEL_ID")) ??
     normalizeChannelId(settings?.general_creators_channel_id) ??
     null
   );
@@ -40,8 +40,8 @@ export function getDiscordNoticeChannelId(settings?: DiscordSettings | null) {
 
 export function getDiscordGeneralCreatorsChannelId(settings?: DiscordSettings | null) {
   return (
-    normalizeChannelId(env.DISCORD_GENERAL_CREATORS_CHANNEL_ID) ??
-    normalizeChannelId(env.DISCORD_NOTICES_CHANNEL_ID) ??
+    normalizeChannelId(getServerEnvValue("DISCORD_GENERAL_CREATORS_CHANNEL_ID")) ??
+    normalizeChannelId(getServerEnvValue("DISCORD_NOTICES_CHANNEL_ID")) ??
     normalizeChannelId(settings?.general_creators_channel_id) ??
     null
   );
@@ -53,19 +53,23 @@ export function getDiscordChannelIdForPurpose(
 ) {
   switch (purpose) {
     case "rules":
-      return normalizeChannelId(env.DISCORD_RULES_CHANNEL_ID);
+      return normalizeChannelId(getServerEnvValue("DISCORD_RULES_CHANNEL_ID"));
     case "influencer_requirements":
-      return normalizeChannelId(env.DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID);
+      return normalizeChannelId(
+        getServerEnvValue("DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID"),
+      );
     case "streamer_requirements":
-      return normalizeChannelId(env.DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID);
+      return normalizeChannelId(
+        getServerEnvValue("DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID"),
+      );
     case "ticket":
-      return normalizeChannelId(env.DISCORD_TICKET_CHANNEL_ID);
+      return normalizeChannelId(getServerEnvValue("DISCORD_TICKET_CHANNEL_ID"));
     case "punishments":
-      return normalizeChannelId(env.DISCORD_PUNISHMENTS_CHANNEL_ID);
+      return normalizeChannelId(getServerEnvValue("DISCORD_PUNISHMENTS_CHANNEL_ID"));
     case "notices":
       return getDiscordNoticeChannelId(settings);
     case "logos":
-      return normalizeChannelId(env.DISCORD_LOGOS_CHANNEL_ID);
+      return normalizeChannelId(getServerEnvValue("DISCORD_LOGOS_CHANNEL_ID"));
     case "general_creators":
       return getDiscordGeneralCreatorsChannelId(settings);
     default:
@@ -127,19 +131,19 @@ export function getDiscordChannelStatusItems(settings?: DiscordSettings | null) 
   const noticesId = getDiscordNoticeChannelId(settings);
   const generalCreatorsId = getDiscordGeneralCreatorsChannelId(settings);
   const noticesUsesFallbackFromGeneral =
-    !normalizeChannelId(env.DISCORD_NOTICES_CHANNEL_ID) &&
-    Boolean(normalizeChannelId(env.DISCORD_GENERAL_CREATORS_CHANNEL_ID));
+    !normalizeChannelId(getServerEnvValue("DISCORD_NOTICES_CHANNEL_ID")) &&
+    Boolean(normalizeChannelId(getServerEnvValue("DISCORD_GENERAL_CREATORS_CHANNEL_ID")));
   const noticesUsesDatabaseFallback =
-    !normalizeChannelId(env.DISCORD_NOTICES_CHANNEL_ID) &&
-    !normalizeChannelId(env.DISCORD_GENERAL_CREATORS_CHANNEL_ID) &&
+    !normalizeChannelId(getServerEnvValue("DISCORD_NOTICES_CHANNEL_ID")) &&
+    !normalizeChannelId(getServerEnvValue("DISCORD_GENERAL_CREATORS_CHANNEL_ID")) &&
     Boolean(normalizeChannelId(settings?.general_creators_channel_id));
 
   const generalUsesNoticesFallback =
-    !normalizeChannelId(env.DISCORD_GENERAL_CREATORS_CHANNEL_ID) &&
-    Boolean(normalizeChannelId(env.DISCORD_NOTICES_CHANNEL_ID));
+    !normalizeChannelId(getServerEnvValue("DISCORD_GENERAL_CREATORS_CHANNEL_ID")) &&
+    Boolean(normalizeChannelId(getServerEnvValue("DISCORD_NOTICES_CHANNEL_ID")));
   const generalUsesDatabaseFallback =
-    !normalizeChannelId(env.DISCORD_GENERAL_CREATORS_CHANNEL_ID) &&
-    !normalizeChannelId(env.DISCORD_NOTICES_CHANNEL_ID) &&
+    !normalizeChannelId(getServerEnvValue("DISCORD_GENERAL_CREATORS_CHANNEL_ID")) &&
+    !normalizeChannelId(getServerEnvValue("DISCORD_NOTICES_CHANNEL_ID")) &&
     Boolean(normalizeChannelId(settings?.general_creators_channel_id));
 
   return [

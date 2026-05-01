@@ -10,6 +10,7 @@ export interface Profile {
   id: string;
   user_id: string;
   name: string;
+  email?: string | null;
   discord_name: string | null;
   discord_id: string | null;
   role: AppRole;

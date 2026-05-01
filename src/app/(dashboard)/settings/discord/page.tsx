@@ -2,13 +2,11 @@ import { DiscordLogCard } from "@/components/discord-log-card";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getDiscordChannelStatusItems } from "@/lib/discord-channels";
-import {
-  isDiscordBotTokenConfigured,
-  isDiscordCreatorsCategoryConfigured,
-  isDiscordGuildConfigured,
-  isServiceRoleConfigured,
-} from "@/lib/env";
 import { getDiscordLogs, getDiscordSettings } from "@/lib/data";
+import {
+  getServerEnvValue,
+  isServerServiceRoleConfigured,
+} from "@/lib/server-env";
 import { requireSession } from "@/lib/session";
 
 function getSourceLabel(source: "env" | "fallback" | "database" | "missing") {
@@ -33,6 +31,11 @@ export default async function DiscordSettingsPage() {
   ]);
 
   const channelStatuses = getDiscordChannelStatusItems(settings);
+  const isDiscordBotTokenConfigured = Boolean(getServerEnvValue("DISCORD_BOT_TOKEN"));
+  const isDiscordGuildConfigured = Boolean(getServerEnvValue("DISCORD_GUILD_ID"));
+  const isDiscordCreatorsCategoryConfigured = Boolean(
+    getServerEnvValue("DISCORD_CREATORS_CATEGORY_ID"),
+  );
   const primaryNoticeChannel = channelStatuses.find(
     (channel) => channel.purpose === "notices",
   );
@@ -40,14 +43,14 @@ export default async function DiscordSettingsPage() {
     (channel) => channel.required && !channel.configured,
   );
   const isDiscordReady =
-    isServiceRoleConfigured &&
+    isServerServiceRoleConfigured() &&
     isDiscordBotTokenConfigured &&
     isDiscordGuildConfigured &&
     isDiscordCreatorsCategoryConfigured &&
     Boolean(primaryNoticeChannel?.configured);
 
   const checks: Array<[string, boolean]> = [
-    ["Chave interna da equipe", isServiceRoleConfigured],
+    ["Chave interna da equipe", isServerServiceRoleConfigured()],
     ["Credencial do bot", isDiscordBotTokenConfigured],
     ["Servidor do Coliseu", isDiscordGuildConfigured],
     ["Categoria dos creators", isDiscordCreatorsCategoryConfigured],

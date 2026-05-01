@@ -1,6 +1,6 @@
 import "server-only";
 
-import { env } from "@/lib/env";
+import { getServerEnvValue } from "@/lib/server-env";
 import type { Creator, MetricSubmission, NoticeTargetType, NoticeType } from "@/lib/types";
 
 export interface DiscordSendResult {
@@ -98,6 +98,8 @@ export async function sendDiscordChannelMessage(
     missingChannelMessage?: string;
   },
 ): Promise<DiscordSendResult> {
+  const discordBotToken = getServerEnvValue("DISCORD_BOT_TOKEN");
+
   if (!channelId) {
     return {
       status: "failed",
@@ -108,7 +110,7 @@ export async function sendDiscordChannelMessage(
     };
   }
 
-  if (!env.DISCORD_BOT_TOKEN) {
+  if (!discordBotToken) {
     return {
       status: "failed",
       channelId,
@@ -119,7 +121,7 @@ export async function sendDiscordChannelMessage(
   const response = await fetch(`https://discord.com/api/v10/channels/${channelId}/messages`, {
     method: "POST",
     headers: {
-      Authorization: `Bot ${env.DISCORD_BOT_TOKEN}`,
+      Authorization: `Bot ${discordBotToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

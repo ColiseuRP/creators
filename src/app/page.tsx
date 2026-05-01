@@ -10,6 +10,7 @@ import {
 
 import { ColiseuLogo } from "@/components/coliseu-logo";
 import { PublicShell } from "@/components/public-shell";
+import { getRoleHomePath } from "@/lib/permissions";
 import { getSessionContext } from "@/lib/session";
 
 export default async function Home() {
@@ -17,8 +18,8 @@ export default async function Home() {
   const areaHref =
     actor.role === "creator"
       ? "/metrics/new"
-      : actor.user
-        ? "/dashboard"
+      : actor.role
+        ? getRoleHomePath(actor.role)
         : "/login";
 
   return (

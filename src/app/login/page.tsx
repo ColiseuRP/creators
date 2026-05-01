@@ -2,9 +2,11 @@ import Link from "next/link";
 import { Crown, Shield, Swords } from "lucide-react";
 import { redirect } from "next/navigation";
 
-import { signInAction } from "@/app/actions/auth";
+import { switchDemoRoleAction } from "@/app/actions/auth";
 import { ColiseuLogo } from "@/components/coliseu-logo";
+import { LoginForm } from "@/components/forms/login-form";
 import { isMockMode } from "@/lib/env";
+import { getRoleHomePath } from "@/lib/permissions";
 import { getSessionContext } from "@/lib/session";
 
 interface LoginPageProps {
@@ -16,8 +18,8 @@ interface LoginPageProps {
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const actor = await getSessionContext();
 
-  if (actor.user && actor.profile) {
-    redirect("/dashboard");
+  if (actor.user && actor.profile && actor.role) {
+    redirect(getRoleHomePath(actor.role));
   }
 
   const params = await searchParams;
@@ -55,9 +57,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </article>
           <article className="surface-card p-5">
             <Crown className="h-6 w-6 text-[var(--gold)]" />
-            <p className="mt-4 font-semibold text-[var(--white)]">Representacao oficial</p>
+            <p className="mt-4 font-semibold text-[var(--white)]">Representação oficial</p>
             <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
-              Um ambiente forte, serio e alinhado com a identidade do Coliseu RP.
+              Um ambiente forte, sério e alinhado com a identidade do Coliseu RP.
             </p>
           </article>
         </div>
@@ -79,7 +81,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </Link>
         </div>
 
-        {error ? (
+        {error && isMockMode ? (
           <div className="mb-6 rounded-2xl border border-[rgba(139,30,30,0.45)] bg-[rgba(139,30,30,0.2)] px-4 py-3 text-sm text-[#ffd0d0]">
             {error}
           </div>
@@ -106,7 +108,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             ].map((option) => (
               <form
                 key={option.role}
-                action={signInAction}
+                action={switchDemoRoleAction}
                 className="surface-card p-5"
               >
                 <input type="hidden" name="role" value={option.role} />
@@ -126,33 +128,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             ))}
           </div>
         ) : (
-          <form action={signInAction} className="space-y-4">
-            <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-              <span>Email</span>
-              <input
-                name="email"
-                type="email"
-                required
-                placeholder="nome@exemplo.com"
-                className="field-input"
-              />
-            </label>
-
-            <label className="block space-y-2 text-sm font-medium text-[var(--white)]">
-              <span>Senha</span>
-              <input
-                name="password"
-                type="password"
-                required
-                placeholder="Sua senha"
-                className="field-input"
-              />
-            </label>
-
-            <button type="submit" className="button-gold mt-2">
-              Entrar
-            </button>
-          </form>
+          <LoginForm initialError={error} />
         )}
       </section>
     </div>
