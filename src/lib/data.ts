@@ -12,6 +12,7 @@ import type {
   Creator,
   CreatorApplication,
   CreatorNotice,
+  DiscordTicketSnapshot,
   DashboardSnapshot,
   DiscordMessageLog,
   DiscordSettings,
@@ -20,6 +21,7 @@ import type {
   MetricSubmission,
   SessionContext,
 } from "@/lib/types";
+import { getCreatorTicketSnapshot as getDiscordTicketSnapshotFromStore } from "@/shared/discord-ticket-store";
 
 type ServerSupabaseClient = NonNullable<
   Awaited<ReturnType<typeof createSupabaseServerClient>>
@@ -342,6 +344,40 @@ export async function getDiscordSettings(
     .maybeSingle();
 
   return (data as DiscordSettings | null) ?? null;
+}
+
+export async function getDiscordTicketSnapshot(
+  actor: SessionContext,
+): Promise<DiscordTicketSnapshot> {
+  if (!actor.canManageCreators) {
+    return {
+      openCount: 0,
+      closedCount: 0,
+      archivedCount: 0,
+      totalCount: 0,
+      recentTickets: [],
+      panel: null,
+    };
+  }
+
+  if (actor.mockMode) {
+    return getDiscordTicketSnapshotFromStore(null);
+  }
+
+  const supabase = await createSupabaseServerClient();
+
+  if (!supabase) {
+    return {
+      openCount: 0,
+      closedCount: 0,
+      archivedCount: 0,
+      totalCount: 0,
+      recentTickets: [],
+      panel: null,
+    };
+  }
+
+  return getDiscordTicketSnapshotFromStore(supabase);
 }
 
 export async function getMetrics(actor: SessionContext): Promise<MetricSubmission[]> {
