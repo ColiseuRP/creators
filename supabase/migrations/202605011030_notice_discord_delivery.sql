@@ -1,5 +1,3 @@
-alter type public.discord_log_status add value if not exists 'pending';
-
 alter table public.creator_notices
   add column if not exists discord_status public.discord_log_status,
   add column if not exists discord_channel_id text,

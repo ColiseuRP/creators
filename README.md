@@ -121,7 +121,10 @@ Variáveis do Discord:
 Observação:
 
 - Quando `DISCORD_GENERAL_CREATORS_CHANNEL_ID` não estiver preenchido, o sistema usa `DISCORD_NOTICES_CHANNEL_ID` como fallback para avisos gerais.
-- Para o painel completo de avisos e registros do Discord, aplique também a migration [supabase/migrations/202605011030_notice_discord_delivery.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/migrations/202605011030_notice_discord_delivery.sql).
+- Para o painel completo de avisos e registros do Discord, aplique também estas migrations, nesta ordem:
+- [supabase/migrations/202605011020_discord_log_pending_enum.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/migrations/202605011020_discord_log_pending_enum.sql)
+- [supabase/migrations/202605011030_notice_discord_delivery.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/migrations/202605011030_notice_discord_delivery.sql)
+- Essa separação é necessária porque o PostgreSQL exige que o novo valor do enum seja confirmado antes de ser usado nas alterações seguintes.
 
 Permissões necessárias do bot no canal de avisos:
 
