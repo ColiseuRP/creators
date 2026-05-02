@@ -7,8 +7,8 @@ export function registerReadyEvent(context: BotContext) {
     logBotInfo(`Bot Creators Coliseu online como ${context.client.user?.tag ?? "bot"}`);
     logBotInfo("Auto cargo Cidadão ativado.");
     logBotInfo("Sistema de tickets carregado.");
+    logBotInfo("Sistema de formulário carregado.");
     logBotInfo("Painel de tickets pronto para publicação.");
-    logBotInfo("Formulário de inscrição carregado.");
     logBotInfo("Painel do formulário pronto para publicação.");
 
     if (!context.supabase) {

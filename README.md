@@ -201,6 +201,7 @@ Scripts disponíveis:
 ```bash
 npm run bot:dev
 npm run bot:start
+npm run bot:deploy-commands
 ```
 
 O entrypoint fica em `src/bot/index.ts`.
@@ -217,7 +218,21 @@ Logs esperados:
 - `Bot Creators Coliseu online como ...`
 - `Auto cargo Cidadão ativado.`
 - `Sistema de tickets carregado.`
+- `Sistema de formulário carregado.`
 - `Painel de tickets pronto para publicação.`
+- `Painel do formulário pronto para publicação.`
+
+### Publicação dos slash commands
+
+Antes de usar os comandos slash no servidor, publique os comandos do bot:
+
+```bash
+npm run bot:deploy-commands
+```
+
+Esse script registra os comandos da guild configurada no Discord, incluindo:
+
+- `setup-tickets`
 
 ## Funcionalidades do bot
 
@@ -411,9 +426,17 @@ Fluxo recomendado:
 npm run bot:start
 ```
 
+No Railway, não use `npm start`, porque esse comando sobe o site Next.js com `next start`. Para o serviço do bot ficar online 24h e responder botões, modais e slash commands, o start command do serviço deve ser `npm run bot:start`.
+
 4. Configure as variáveis de ambiente do bot e do Supabase.
-5. Acompanhe os logs do serviço.
-6. Confirme se aparece:
+5. Depois de subir o serviço, publique os comandos com:
+
+```bash
+npm run bot:deploy-commands
+```
+
+6. Acompanhe os logs do serviço.
+7. Confirme se aparece:
 
 ```text
 Bot Creators Coliseu online como ...
@@ -435,4 +458,5 @@ npm run start
 npm run lint
 npm run bot:dev
 npm run bot:start
+npm run bot:deploy-commands
 ```
