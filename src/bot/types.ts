@@ -9,6 +9,8 @@ export interface BotConfig {
   creatorsCategoryId: string;
   noticesChannelId: string;
   generalCreatorsChannelId: string;
+  responsavelStaffRoleId: string;
+  responsavelCreatorsRoleId: string | null;
   staffRoleIds: string[];
   archivedTicketsCategoryId: string | null;
   supabaseUrl: string | null;

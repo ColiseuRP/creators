@@ -14,6 +14,7 @@ import {
   buildClosingTicketMessage,
   canManageTicket,
   CREATOR_TICKET_CLOSE_DELAY_MS,
+  getCreatorTicketTypeLabel,
 } from "../../shared/discord-ticketing";
 import { dispatchBotLog } from "../services/log-dispatcher";
 import { logBotError, logBotInfo } from "../services/logger";
@@ -122,17 +123,20 @@ export async function handleCreatorTicketClose(
           openerDiscordUserId: ticket.discord_user_id,
         });
 
+        const ticketLabel = getCreatorTicketTypeLabel(ticket.ticket_type);
         const successMessage =
           closureStatus === "archived"
-            ? `Ticket de ${ticket.discord_username} arquivado com sucesso.`
-            : `Ticket de ${ticket.discord_username} fechado com sucesso.`;
+            ? `Ticket ${ticketLabel} de ${ticket.discord_username} arquivado com sucesso.`
+            : `Ticket ${ticketLabel} de ${ticket.discord_username} fechado com sucesso.`;
 
         logBotInfo(successMessage);
 
         await dispatchBotLog(context, {
           type: "ticket_closed",
           discordUserId: ticket.discord_user_id,
+          discordUsername: ticket.discord_username,
           channelId: channel.id,
+          ticketType: ticket.ticket_type,
           status: "success",
           message: successMessage,
         });
@@ -144,7 +148,9 @@ export async function handleCreatorTicketClose(
         await dispatchBotLog(context, {
           type: "ticket_close_failed",
           discordUserId: ticket.discord_user_id,
+          discordUsername: ticket.discord_username,
           channelId: interaction.channelId,
+          ticketType: ticket.ticket_type,
           status: "failed",
           message: `Falha ao fechar o ticket de ${ticket.discord_username}.`,
           errorMessage,
@@ -162,6 +168,7 @@ export async function handleCreatorTicketClose(
     await dispatchBotLog(context, {
       type: "ticket_close_failed",
       discordUserId: interaction.user.id,
+      discordUsername: interaction.user.tag,
       channelId: interaction.channelId,
       status: "failed",
       message: `Falha ao processar o fechamento do ticket por ${interaction.user.tag}.`,

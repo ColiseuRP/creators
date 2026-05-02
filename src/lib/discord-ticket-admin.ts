@@ -1,6 +1,9 @@
 import "server-only";
 
-import { getDiscordChannelIdForPurpose, getDiscordMissingChannelMessage } from "@/lib/discord-channels";
+import {
+  getDiscordChannelIdForPurpose,
+  getDiscordMissingChannelMessage,
+} from "@/lib/discord-channels";
 import { getServerEnvValue } from "@/lib/server-env";
 import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import {
@@ -154,7 +157,6 @@ export async function publishCreatorTicketPanel(): Promise<TicketPanelPublishRes
 
   try {
     const currentPanel = await getDiscordPanelByType(serviceClient, CREATOR_TICKET_PANEL_TYPE);
-
     let messageId: string | null = null;
 
     try {

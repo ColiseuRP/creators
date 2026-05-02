@@ -37,6 +37,8 @@ DISCORD_GUILD_ID=
 DISCORD_CITIZEN_ROLE_ID=1447948745718239476
 DISCORD_CREATORS_CATEGORY_ID=1447948746985046028
 DISCORD_ARCHIVED_TICKETS_CATEGORY_ID=
+DISCORD_RESPONSAVEL_STAFF_ROLE_ID=1447948745827156051
+DISCORD_RESPONSAVEL_CREATORS_ROLE_ID=
 DISCORD_STAFF_ROLE_IDS=
 
 DISCORD_GENERAL_CREATORS_CHANNEL_ID=1447948746985046029
@@ -55,6 +57,8 @@ Regras importantes:
 - `SUPABASE_SERVICE_ROLE_KEY` deve existir apenas no backend e no processo do bot.
 - `DISCORD_BOT_TOKEN` deve existir apenas no backend e no processo do bot.
 - Nunca exponha `SUPABASE_SERVICE_ROLE_KEY` ou `DISCORD_BOT_TOKEN` no navegador.
+- `DISCORD_RESPONSAVEL_STAFF_ROLE_ID` define o cargo principal que será marcado nos tickets.
+- `DISCORD_RESPONSAVEL_CREATORS_ROLE_ID` é opcional e pode liberar outro cargo oficial da equipe.
 - `DISCORD_STAFF_ROLE_IDS` aceita múltiplos IDs separados por vírgula.
 - `DISCORD_ARCHIVED_TICKETS_CATEGORY_ID` é opcional. Se não estiver preenchida, tickets fechados são removidos em vez de arquivados.
 - Se `DISCORD_GENERAL_CREATORS_CHANNEL_ID` não estiver configurado, o sistema usa `DISCORD_NOTICES_CHANNEL_ID` como fallback de compatibilidade.
@@ -75,6 +79,7 @@ No `SQL Editor` do Supabase, execute os arquivos nesta ordem:
 3. `supabase/migrations/202605011030_notice_discord_delivery.sql`
 4. `supabase/migrations/202605011130_discord_bot_tickets.sql`
 5. `supabase/migrations/202605011340_bootstrap_discord_bot_tables.sql`
+6. `supabase/migrations/202605011430_ticket_type_support.sql`
 
 As migrations cobrem:
 
@@ -95,6 +100,8 @@ As migrations cobrem:
 - `discord_bot_logs`
 
 Se a produção estiver mostrando erros como `Could not find the table 'public.creator_tickets' in the schema cache`, aplique também `202605011340_bootstrap_discord_bot_tables.sql` no Supabase para criar as tabelas ausentes e atualizar a estrutura esperada pelo site.
+
+Para liberar o filtro por tipo de atendimento, a gravação de `ticket_type` e os campos novos de log do bot, aplique também `202605011430_ticket_type_support.sql`.
 
 Também cria:
 
@@ -220,25 +227,27 @@ Logs previstos:
 
 ### 2. Sistema de tickets
 
-O painel de tickets publica uma mensagem no canal `DISCORD_TICKET_CHANNEL_ID` com o botão:
+O painel de tickets publica um embed no canal `DISCORD_TICKET_CHANNEL_ID` com um menu de seleção para o creator escolher o tipo de atendimento.
 
-- `Criar sala creator`
+`customId` usados:
 
-`customId` usado:
-
-- `creator_ticket_create`
-
-Ao clicar:
-
-- o bot verifica se já existe ticket aberto
-- cria um canal privado na categoria `DISCORD_CREATORS_CATEGORY_ID`
-- aplica permissões para opener, staff configurada e bot
-- registra o ticket em `creator_tickets`
-- envia mensagem inicial com botão de fechamento
-
-`customId` do fechamento:
-
+- `creator_ticket_type_select`
 - `creator_ticket_close`
+
+Opções do painel:
+
+- `📸 Atendimento Influencer`
+- `🎮 Atendimento Streamer`
+
+Ao selecionar uma opção:
+
+- o bot verifica se já existe ticket aberto para o usuário
+- cria um canal privado na categoria `DISCORD_CREATORS_CATEGORY_ID`
+- usa o formato `ticket-influencer-{usuario}` ou `ticket-streamer-{usuario}`
+- aplica permissões para o creator, o cargo principal `DISCORD_RESPONSAVEL_STAFF_ROLE_ID`, cargos extras em `DISCORD_STAFF_ROLE_IDS` e o próprio bot
+- registra o ticket em `creator_tickets` com `ticket_type`
+- envia mensagem inicial específica para influencer ou streamer
+- marca o cargo responsável na abertura do atendimento
 
 Ao fechar:
 
@@ -251,7 +260,9 @@ Logs previstos:
 
 - `ticket_panel_published`
 - `ticket_panel_failed`
-- `ticket_created`
+- `ticket_type_selected`
+- `ticket_streamer_created`
+- `ticket_influencer_created`
 - `ticket_create_failed`
 - `ticket_duplicate_blocked`
 - `ticket_closed`
@@ -265,7 +276,7 @@ O projeto já possui rota segura para o painel administrativo:
 
 Ela:
 
-- publica a mensagem no canal de tickets
+- publica ou atualiza o embed com menu de seleção no canal de tickets
 - reutiliza a mensagem anterior quando possível
 - evita duplicidade salvando `message_id` em `discord_panels`
 
@@ -280,6 +291,7 @@ Na Central de Creators e em Configurações do Discord, o painel já mostra:
 - total de tickets abertos
 - tickets fechados
 - tickets arquivados
+- filtro por tipo de ticket
 - últimos tickets criados
 - status do painel publicado
 - configuração dos canais do Discord
@@ -293,6 +305,7 @@ O bot precisa destas permissões:
 - Read Message History
 - Manage Channels
 - Manage Roles
+- Manage Permissions
 - Embed Links
 - Attach Files
 - Use Application Commands
@@ -301,6 +314,7 @@ Também garanta:
 
 - o cargo do bot acima do cargo Cidadão
 - o cargo do bot acima de qualquer cargo que ele precise gerenciar
+- o cargo do bot acima do `DISCORD_RESPONSAVEL_STAFF_ROLE_ID`
 - permissão para criar canais na categoria dos creators
 - permissão para ver e enviar mensagens no canal de tickets
 - permissão para ver e enviar mensagens no canal de avisos

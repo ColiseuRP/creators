@@ -5,20 +5,57 @@ import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getCreators, getDiscordTicketSnapshot } from "@/lib/data";
 import { requireSession } from "@/lib/session";
+import type { CreatorTicketType } from "@/lib/types";
 import { formatDate, formatDateOnly } from "@/lib/utils";
+import { getCreatorTicketTypeLabel } from "@/shared/discord-ticketing";
 
-export default async function CentralCreatorsPage() {
+interface CentralCreatorsPageProps {
+  searchParams: Promise<{
+    ticketType?: string;
+  }>;
+}
+
+const ticketTypeFilterOptions: Array<{
+  value: CreatorTicketType | null;
+  label: string;
+}> = [
+  { value: null, label: "Todos" },
+  { value: "streamer", label: "Streamer" },
+  { value: "influencer", label: "Influencer" },
+];
+
+function resolveTicketTypeFilter(
+  value: string | undefined,
+): CreatorTicketType | null {
+  if (value === "streamer" || value === "influencer") {
+    return value;
+  }
+
+  return null;
+}
+
+export default async function CentralCreatorsPage({
+  searchParams,
+}: CentralCreatorsPageProps) {
   const actor = await requireSession(["admin_general", "responsavel_creators"]);
+  const params = await searchParams;
+  const ticketTypeFilter = resolveTicketTypeFilter(params.ticketType);
   const [creators, ticketSnapshot] = await Promise.all([
     getCreators(actor),
-    getDiscordTicketSnapshot(actor),
+    getDiscordTicketSnapshot(actor, {
+      ticketType: ticketTypeFilter,
+    }),
   ]);
+
+  const activeFilterLabel = ticketTypeFilter
+    ? getCreatorTicketTypeLabel(ticketTypeFilter)
+    : "Todos";
 
   return (
     <div className="space-y-6">
       <SectionCard
         title="Tickets Discord"
-        description="Acompanhe o movimento das salas privadas de atendimento e publique o painel oficial do Creators Coliseu sem sair da central."
+        description="Acompanhe o movimento das salas privadas de atendimento, filtre por tipo e publique o painel oficial do Creators Coliseu sem sair da central."
       >
         <div className="grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
           <div className="grid gap-4 md:grid-cols-3">
@@ -57,8 +94,7 @@ export default async function CentralCreatorsPage() {
                   Painel de atendimento
                 </p>
                 <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                  Publique ou atualize a mensagem com botão no canal de tickets para
-                  abrir salas privadas dos creators.
+                  Publique ou atualize o embed com seleção de atendimento no canal de tickets para abrir salas privadas dos creators.
                 </p>
               </div>
 
@@ -98,12 +134,41 @@ export default async function CentralCreatorsPage() {
 
         <div className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
-              Últimos tickets criados
-            </p>
+            <div>
+              <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
+                Últimos tickets criados
+              </p>
+              <p className="mt-2 text-sm text-[var(--muted)]">
+                Filtro atual: {activeFilterLabel}
+              </p>
+            </div>
+
             <p className="text-sm text-[var(--muted)]">
               Total registrado: {ticketSnapshot.totalCount}
             </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {ticketTypeFilterOptions.map((option) => {
+              const isActive = option.value === ticketTypeFilter;
+              const href = option.value
+                ? `/central/creators?ticketType=${option.value}`
+                : "/central/creators";
+
+              return (
+                <Link
+                  key={option.label}
+                  href={href}
+                  className={
+                    isActive
+                      ? "inline-flex items-center rounded-full border border-[rgba(245,197,66,0.35)] bg-[rgba(245,197,66,0.14)] px-4 py-2 text-sm font-semibold text-[var(--gold)]"
+                      : "inline-flex items-center rounded-full border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-2 text-sm font-semibold text-[var(--muted)] transition hover:border-[rgba(245,197,66,0.24)] hover:text-[var(--white)]"
+                  }
+                >
+                  {option.label}
+                </Link>
+              );
+            })}
           </div>
 
           {ticketSnapshot.recentTickets.length > 0 ? (
@@ -128,7 +193,12 @@ export default async function CentralCreatorsPage() {
                       </div>
                     </div>
 
-                    <StatusBadge status={ticket.status} />
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center rounded-full border border-[rgba(245,197,66,0.22)] bg-[rgba(245,197,66,0.08)] px-3 py-1 text-xs font-semibold tracking-wide text-[var(--gold)]">
+                        {getCreatorTicketTypeLabel(ticket.ticket_type)}
+                      </span>
+                      <StatusBadge status={ticket.status} />
+                    </div>
                   </div>
 
                   {ticket.close_reason ? (
