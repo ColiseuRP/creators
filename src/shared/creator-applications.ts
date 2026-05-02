@@ -7,7 +7,8 @@ import { formatDate } from "../lib/utils";
 
 export const CREATOR_APPLICATION_FORM_PANEL_TYPE = "creator_application_form_panel";
 export const CREATOR_APPLICATION_START_CUSTOM_ID = "creator_application_start";
-export const CREATOR_APPLICATION_MODAL_CUSTOM_ID = "creator_application_submit";
+export const CREATOR_APPLICATION_MODAL_CUSTOM_ID = "creator_application_modal";
+export const CREATOR_APPLICATION_LEGACY_MODAL_CUSTOM_ID = "creator_application_submit";
 export const CREATOR_APPLICATION_REJECT_REASON_FIELD_ID = "rejection_reason";
 export const CREATOR_APPLICATION_APPROVE_PREFIX = "creator_application_approve:";
 export const CREATOR_APPLICATION_REJECT_PREFIX = "creator_application_reject:";
@@ -25,6 +26,13 @@ const CREATOR_APPLICATION_UUID_REGEX =
 export function isCreatorApplicationUuid(value: string | null | undefined) {
   const normalized = value?.trim();
   return Boolean(normalized && CREATOR_APPLICATION_UUID_REGEX.test(normalized));
+}
+
+export function isCreatorApplicationModalCustomId(value: string) {
+  return (
+    value === CREATOR_APPLICATION_MODAL_CUSTOM_ID ||
+    value === CREATOR_APPLICATION_LEGACY_MODAL_CUSTOM_ID
+  );
 }
 
 function truncateFieldValue(value: string, maxLength = 1000) {

@@ -44,6 +44,21 @@ interface CreateCreatorApplicationOptions {
   fallbackToMemory?: boolean;
 }
 
+interface CreateDiscordCreatorApplicationInput {
+  name: string;
+  discordName: string;
+  discordId: string;
+  cityName: string;
+  category: string;
+  frequency: string;
+  reason: string;
+  contentLinks?: string | null;
+  observations?: string | null;
+  status?: CreatorApplicationStatus;
+  source?: CreatorApplicationSource;
+  createdAt?: string;
+}
+
 interface ReviewCreatorApplicationInput {
   applicationId: string;
   decision: Extract<CreatorApplicationStatus, "approved" | "rejected">;
@@ -408,6 +423,94 @@ export async function createCreatorApplicationRecord(
   if (error) {
     if (isMissingTableError(error) && fallbackToMemory) {
       return createCreatorApplicationRecord(null, input, options);
+    }
+
+    throw new Error(error.message);
+  }
+
+  const application = normalizeApplication(data as CreatorApplication);
+  assertPersistentApplicationId(application.id);
+  return application;
+}
+
+export async function createDiscordCreatorApplicationRecord(
+  client: DatabaseClient,
+  input: CreateDiscordCreatorApplicationInput,
+  options?: CreateCreatorApplicationOptions,
+) {
+  const createdAt = input.createdAt ?? getNowIso();
+  const fallbackToMemory = options?.fallbackToMemory ?? true;
+
+  if (!client) {
+    if (!fallbackToMemory) {
+      throw new Error("Não foi possível salvar a inscrição no Supabase.");
+    }
+
+    const application = normalizeApplication({
+      id: createMemoryId("application"),
+      name: input.name,
+      discord_name: input.discordName,
+      discord_id: input.discordId,
+      city_name: input.cityName,
+      age: null,
+      category: input.category,
+      frequency: input.frequency,
+      reason: input.reason,
+      content_links: input.contentLinks ?? null,
+      observations: input.observations ?? null,
+      status: input.status ?? "pending",
+      created_at: createdAt,
+      reviewed_at: null,
+      reviewed_by: null,
+      source: input.source ?? "discord",
+    });
+
+    memoryState.applications.unshift(application);
+    return application;
+  }
+
+  let { data, error } = await client
+    .from("creator_applications")
+    .insert({
+      name: input.name,
+      discord_name: input.discordName,
+      discord_id: input.discordId,
+      city_name: input.cityName,
+      category: input.category,
+      frequency: input.frequency,
+      reason: input.reason,
+      content_links: input.contentLinks ?? null,
+      observations: input.observations ?? null,
+      status: input.status ?? "pending",
+      source: input.source ?? "discord",
+      created_at: createdAt,
+    })
+    .select("*")
+    .single();
+
+  if (error && isMissingColumnError(error, "source")) {
+    ({ data, error } = await client
+      .from("creator_applications")
+      .insert({
+        name: input.name,
+        discord_name: input.discordName,
+        discord_id: input.discordId,
+        city_name: input.cityName,
+        category: input.category,
+        frequency: input.frequency,
+        reason: input.reason,
+        content_links: input.contentLinks ?? null,
+        observations: input.observations ?? null,
+        status: input.status ?? "pending",
+        created_at: createdAt,
+      })
+      .select("*")
+      .single());
+  }
+
+  if (error) {
+    if (isMissingTableError(error) && fallbackToMemory) {
+      return createDiscordCreatorApplicationRecord(null, input, options);
     }
 
     throw new Error(error.message);

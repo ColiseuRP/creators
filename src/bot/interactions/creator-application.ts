@@ -25,7 +25,7 @@ import {
   isCreatorApplicationUuid,
 } from "../../shared/creator-applications";
 import {
-  createCreatorApplicationRecord,
+  createDiscordCreatorApplicationRecord,
   findCreatorApplicationById,
   reviewCreatorApplicationRecord,
   syncApprovedCreatorFromApplication,
@@ -37,6 +37,8 @@ import type { BotContext } from "../types";
 
 const CREATOR_APPLICATION_REVIEW_FAILURE_MESSAGE =
   "Não foi possível analisar esta inscrição. Verifique os logs do bot.";
+const CREATOR_APPLICATION_INVALID_CATEGORY_MESSAGE =
+  "Informe uma categoria válida: Streamer ou Influencer.";
 
 function isGuildMember(
   member: GuildMember | ButtonInteraction["member"] | ModalSubmitInteraction["member"],
@@ -208,6 +210,28 @@ function getCreatorApplicationReviewErrorMessage(error: unknown) {
   }
 
   return CREATOR_APPLICATION_REVIEW_FAILURE_MESSAGE;
+}
+
+function logCreatorApplicationInfo(message: string) {
+  console.log(`[Creators Coliseu] ${message}`);
+}
+
+function logCreatorApplicationError(message: string, error?: unknown) {
+  console.error(`[Creators Coliseu] ${message}`, error ?? "");
+}
+
+function normalizeCreatorApplicationCategory(value: string) {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized === "streamer") {
+    return "streamer";
+  }
+
+  if (normalized === "influencer") {
+    return "influencer";
+  }
+
+  return null;
 }
 
 async function finalizeDiscordApplicationReview(
@@ -416,8 +440,12 @@ export async function handleCreatorApplicationSubmit(
 
   await interaction.deferReply({ ephemeral: true });
 
+  logCreatorApplicationInfo(
+    `Recebendo inscrição de ${interaction.user.tag} (${interaction.user.id})`,
+  );
+
   const cityName = interaction.fields.getTextInputValue("city_name").trim();
-  const category = interaction.fields.getTextInputValue("category").trim();
+  const rawCategory = interaction.fields.getTextInputValue("category").trim();
   const socialLinks = interaction.fields.getTextInputValue("social_links").trim();
   const frequency = interaction.fields.getTextInputValue("frequency").trim();
   const reason = interaction.fields.getTextInputValue("reason").trim();
@@ -425,23 +453,49 @@ export async function handleCreatorApplicationSubmit(
   const displayName = isGuildMember(member)
     ? member.displayName
     : interaction.user.globalName ?? interaction.user.username;
+  const category = normalizeCreatorApplicationCategory(rawCategory);
+
+  if (!category) {
+    logCreatorApplicationError(
+      `Categoria inválida informada por ${interaction.user.tag}: ${rawCategory}`,
+    );
+    await interaction.editReply({
+      content: CREATOR_APPLICATION_INVALID_CATEGORY_MESSAGE,
+    });
+    return;
+  }
+
+  if (!context.supabase) {
+    logCreatorApplicationError(
+      "Supabase do bot não está configurado. Verifique NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no Railway.",
+    );
+    await interaction.editReply({
+      content:
+        "Não foi possível enviar sua inscrição no momento. Procure a equipe Creators Coliseu.",
+    });
+    return;
+  }
 
   try {
-    const application = await createCreatorApplicationRecord(context.supabase, {
+    logCreatorApplicationInfo("Salvando inscrição no Supabase...");
+
+    const application = await createDiscordCreatorApplicationRecord(context.supabase, {
       name: displayName,
       discordName: interaction.user.tag,
       discordId: interaction.user.id,
       cityName,
-      age: null,
       category,
       frequency,
       reason,
       contentLinks: socialLinks,
       observations: "Inscrição enviada pelo formulário oficial do Discord.",
       source: "discord",
+      createdAt: new Date().toISOString(),
     }, {
       fallbackToMemory: false,
     });
+
+    logCreatorApplicationInfo(`Inscrição salva com ID ${application.id}`);
 
     await dispatchBotLog(context, {
       type: "creator_application_submitted",
@@ -454,6 +508,7 @@ export async function handleCreatorApplicationSubmit(
     });
 
     try {
+      logCreatorApplicationInfo("Enviando inscrição para o canal de análise...");
       const reviewChannel = await getReviewChannel(context, interaction.guild.id);
       const reviewMessage = await reviewChannel.send(
         buildCreatorApplicationReviewPayload({
@@ -476,10 +531,25 @@ export async function handleCreatorApplicationSubmit(
         channelId: reviewChannel.id,
         applicationId: application.id,
         status: "success",
-        message: "Inscrição enviada ao canal de formulários para análise.",
+          message: "Inscrição enviada ao canal de formulários para análise.",
+      });
+
+      logCreatorApplicationInfo("Inscrição enviada para análise no Discord.");
+
+      await interaction.editReply({
+        content: "Sua inscrição foi enviada para análise da equipe Creators Coliseu.",
       });
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
+
+      if (
+        error instanceof Error &&
+        error.message === "Canal de formulários do Discord não encontrado."
+      ) {
+        logCreatorApplicationError("Canal de análise de formulários não encontrado.", error);
+      } else {
+        logCreatorApplicationError(`Erro ao enviar inscrição: ${errorMessage}`, error);
+      }
 
       await dispatchBotLog(context, {
         type: "creator_application_sent_to_review_channel",
@@ -493,13 +563,16 @@ export async function handleCreatorApplicationSubmit(
       });
 
       logBotError("Falha ao enviar a inscrição para o canal de análise.", error);
-    }
 
-    await interaction.editReply({
-      content: "Sua inscrição foi enviada para análise da equipe Creators Coliseu.",
-    });
+      await interaction.editReply({
+        content:
+          "Sua inscrição foi salva, mas não foi possível enviar o aviso para a equipe no Discord. Procure a equipe Creators Coliseu.",
+      });
+    }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
+
+    logCreatorApplicationError(`Erro ao enviar inscrição: ${errorMessage}`, error);
 
     await dispatchBotLog(context, {
       type: "creator_application_submitted",

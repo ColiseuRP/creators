@@ -9,6 +9,7 @@ import {
 import {
   CREATOR_APPLICATION_MODAL_CUSTOM_ID,
   CREATOR_APPLICATION_START_CUSTOM_ID,
+  isCreatorApplicationModalCustomId,
 } from "../../shared/creator-applications";
 import {
   handleCreatorApplicationApprove,
@@ -71,7 +72,10 @@ export function registerInteractionCreateEvent(context: BotContext) {
     }
 
     if (interaction.isModalSubmit()) {
-      if (interaction.customId === CREATOR_APPLICATION_MODAL_CUSTOM_ID) {
+      if (
+        interaction.customId === CREATOR_APPLICATION_MODAL_CUSTOM_ID ||
+        isCreatorApplicationModalCustomId(interaction.customId)
+      ) {
         await handleCreatorApplicationSubmit(context, interaction);
         return;
       }
