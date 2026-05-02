@@ -4,13 +4,8 @@ import Link from "next/link";
 import { signOutAction, switchDemoRoleAction } from "@/app/actions/auth";
 import { ColiseuLogo } from "@/components/coliseu-logo";
 import { Sidebar } from "@/components/sidebar";
+import { getRoleLabel } from "@/lib/permissions";
 import type { AppRole, SessionContext } from "@/lib/types";
-
-const roleLabels: Record<AppRole, string> = {
-  admin_general: "Admin Geral",
-  responsavel_creators: "Responsável Creators",
-  creator: "Creator",
-};
 
 export function AppShell({
   actor,
@@ -44,7 +39,7 @@ export function AppShell({
                     {actor.profile.name}
                   </h2>
                   <span className="rounded-full border border-[rgba(245,197,66,0.22)] bg-[rgba(245,197,66,0.08)] px-3 py-1 text-xs font-semibold text-[var(--gold)]">
-                    {roleLabels[actor.role]}
+                    {getRoleLabel(actor.role)}
                   </span>
                   {actor.mockMode ? (
                     <span className="rounded-full border border-[rgba(245,197,66,0.22)] bg-[rgba(255,255,255,0.04)] px-3 py-1 text-xs font-semibold text-[var(--muted)]">
@@ -55,7 +50,7 @@ export function AppShell({
                 <p className="mt-2 max-w-3xl text-sm leading-7 text-[var(--muted)]">
                   {actor.role === "creator"
                     ? "Seu espaço para acompanhar entregas, métricas e avisos da equipe Creators Coliseu."
-                    : "Ambiente oficial da equipe para conduzir análises, creators, avisos e histórico da arena."}
+                    : "Ambiente oficial da equipe para conduzir análises, creators, avisos, tickets e histórico da arena."}
                 </p>
               </div>
             </div>
@@ -71,7 +66,7 @@ export function AppShell({
                         <form key={role} action={switchDemoRoleAction}>
                           <input type="hidden" name="role" value={role} />
                           <button type="submit" className="button-ghost">
-                            {roleLabels[role]}
+                            {getRoleLabel(role)}
                           </button>
                         </form>
                       ),
