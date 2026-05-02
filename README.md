@@ -1,149 +1,147 @@
 # Creators Coliseu
 
-Painel operacional para creators, admins e responsáveis, pronto para deploy na Vercel com:
+Painel operacional do programa Creators Coliseu, com site em Next.js e bot do Discord rodando como processo separado.
 
-- Next.js 16 + TypeScript
+## Stack
+
+- Next.js 16 com TypeScript
 - Tailwind CSS
 - Supabase Auth
 - Supabase PostgreSQL
-- Supabase Storage privado para prints das métricas
-- API Routes seguras para reviews, avisos e Discord
-- Fallback mockado para desenvolvimento quando o Supabase ainda não estiver configurado
+- Supabase Storage
+- Discord integrado por backend e bot dedicado
+- Deploy do site preparado para Vercel
 
 ## Estrutura principal
 
-- [src/app](/C:/Users/Dev%20Snow/Documents/New%20project%203/src/app): páginas App Router, layouts e API routes
-- [src/components](/C:/Users/Dev%20Snow/Documents/New%20project%203/src/components): shell, cards e formulários
-- [src/lib](/C:/Users/Dev%20Snow/Documents/New%20project%203/src/lib): auth, sessão, Supabase, workflows e validações
-- [supabase/migrations/202604301900_initial_schema.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/migrations/202604301900_initial_schema.sql): schema, triggers, bucket e policies RLS
-- [.env.example](/C:/Users/Dev%20Snow/Documents/New%20project%203/.env.example): variáveis de ambiente esperadas
+- `src/app`: páginas, layouts e route handlers do site
+- `src/components`: componentes de interface e formulários
+- `src/lib`: autenticação, sessões, workflows, integrações e utilitários
+- `src/bot`: entrypoint, eventos, interações, serviços e utilitários do bot Discord
+- `src/shared`: helpers compartilhados entre site e bot
+- `supabase/migrations`: schema e evoluções do banco
+- `supabase/seeds`: seeds auxiliares, incluindo o primeiro administrador
+- `.env.example`: variáveis de ambiente esperadas
 
-## 1. Como criar o projeto no Supabase
+## Variáveis de ambiente
 
-1. Acesse [Supabase](https://supabase.com/) e crie um novo projeto.
-2. Copie a `Project URL` e a `anon public key` em `Project Settings > API`.
-3. Copie também a `service_role key`. Ela será usada apenas no backend.
-4. Em `Authentication > Providers`, mantenha `Email` habilitado para login por email/senha.
-
-## 2. Como configurar as tabelas
-
-1. No projeto Supabase, abra `SQL Editor`.
-2. Execute a migration em [supabase/migrations/202604301900_initial_schema.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/migrations/202604301900_initial_schema.sql).
-3. A migration cria:
-   - `profiles`
-   - `creators`
-   - `creator_rooms`
-   - `creator_applications`
-   - `metric_submissions`
-   - `metric_attachments`
-   - `metric_reviews`
-   - `creator_notices`
-   - `discord_settings`
-   - `discord_message_logs`
-4. A migration também cria:
-   - enums de status e papéis
-   - trigger para criar `profiles` a partir de `auth.users`
-   - trigger para criar a sala padrão em `creator_rooms` quando um creator é cadastrado
-   - índices para consultas frequentes
-
-## 3. Como configurar as policies RLS
-
-As policies já estão dentro da migration SQL. Depois de executar o arquivo, confirme em `Authentication > Policies` ou no Table Editor que:
-
-- `profiles`: usuário vê o próprio perfil; staff vê tudo.
-- `creators`: creator vê apenas o próprio cadastro; staff gerencia todos.
-- `creator_rooms`: creator vê apenas a própria sala; staff gerencia todas.
-- `metric_submissions`: creator vê e envia apenas a própria métrica; staff revisa tudo.
-- `metric_attachments`: creator vê e anexa arquivos apenas às próprias métricas; staff acessa tudo.
-- `creator_notices`: creator vê avisos gerais, por categoria e individuais; staff cria e visualiza tudo.
-- `metric_reviews`: creator vê a análise das próprias métricas; staff registra reviews.
-- `discord_settings`: staff visualiza; admin geral pode alterar.
-- `discord_message_logs`: staff acompanha o resultado dos envios ao Discord.
-
-## 4. Como criar o bucket de uploads
-
-O bucket também é criado na migration com estas regras:
-
-- Nome: `metric-attachments`
-- Privado (`public = false`)
-- Tipos aceitos: `PNG`, `JPG`, `JPEG`, `WEBP`
-- Limite por arquivo: `5MB`
-- Pasta do creator: `creator_id/arquivo.ext`
-
-As policies de `storage.objects` garantem que:
-
-- creator só insere e lê arquivos na própria pasta
-- admin e responsável creators podem visualizar e administrar anexos
-
-No frontend, o preview é local e acontece antes do upload real.
-
-## 5. Como configurar as variáveis de ambiente na Vercel
-
-Crie as variáveis abaixo com base em [.env.example](/C:/Users/Dev%20Snow/Documents/New%20project%203/.env.example):
+Use este conjunto no ambiente local e nos serviços de deploy:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
+
 DISCORD_BOT_TOKEN=
 DISCORD_GUILD_ID=
-DISCORD_CREATORS_CATEGORY_ID=
-DISCORD_GENERAL_CREATORS_CHANNEL_ID=
+DISCORD_CITIZEN_ROLE_ID=1447948745718239476
+DISCORD_CREATORS_CATEGORY_ID=1447948746985046028
+DISCORD_ARCHIVED_TICKETS_CATEGORY_ID=
+DISCORD_STAFF_ROLE_IDS=
+
+DISCORD_GENERAL_CREATORS_CHANNEL_ID=1447948746985046029
 DISCORD_RULES_CHANNEL_ID=
 DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID=
 DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID=
-DISCORD_TICKET_CHANNEL_ID=
+DISCORD_TICKET_CHANNEL_ID=1447948746670477469
 DISCORD_PUNISHMENTS_CHANNEL_ID=
-DISCORD_NOTICES_CHANNEL_ID=
+DISCORD_NOTICES_CHANNEL_ID=1447948746985046029
 DISCORD_LOGOS_CHANNEL_ID=
 ```
 
 Regras importantes:
 
-- `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` podem ser usadas no frontend.
-- `SUPABASE_SERVICE_ROLE_KEY` deve existir apenas no backend.
-- `DISCORD_BOT_TOKEN` deve existir apenas no backend.
+- `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` podem ser usados no frontend.
+- `SUPABASE_SERVICE_ROLE_KEY` deve existir apenas no backend e no processo do bot.
+- `DISCORD_BOT_TOKEN` deve existir apenas no backend e no processo do bot.
 - Nunca exponha `SUPABASE_SERVICE_ROLE_KEY` ou `DISCORD_BOT_TOKEN` no navegador.
+- `DISCORD_STAFF_ROLE_IDS` aceita múltiplos IDs separados por vírgula.
+- `DISCORD_ARCHIVED_TICKETS_CATEGORY_ID` é opcional. Se não estiver preenchida, tickets fechados são removidos em vez de arquivados.
+- Se `DISCORD_GENERAL_CREATORS_CHANNEL_ID` não estiver configurado, o sistema usa `DISCORD_NOTICES_CHANNEL_ID` como fallback de compatibilidade.
 
-Variáveis do Discord:
+## Como criar o projeto no Supabase
 
-- `DISCORD_GUILD_ID`: ID do servidor principal do Discord.
-- `DISCORD_CREATORS_CATEGORY_ID`: categoria onde ficam as salas dos creators.
-- `DISCORD_GENERAL_CREATORS_CHANNEL_ID`: compatibilidade com a configuração antiga de avisos gerais.
-- `DISCORD_RULES_CHANNEL_ID`: canal destinado às regras gerais do programa.
-- `DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID`: canal com os requisitos oficiais dos Influencers Coliseu.
-- `DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID`: canal com os requisitos oficiais do Programa de Streamers Coliseu.
-- `DISCORD_TICKET_CHANNEL_ID`: canal usado para orientar abertura de ticket e suporte.
-- `DISCORD_PUNISHMENTS_CHANNEL_ID`: canal para advertências, punições e remoções do programa.
-- `DISCORD_NOTICES_CHANNEL_ID`: canal principal de avisos gerais dos creators.
-- `DISCORD_LOGOS_CHANNEL_ID`: canal para logos, artes e materiais visuais.
+1. Acesse [Supabase](https://supabase.com/) e crie um novo projeto.
+2. Copie a `Project URL` e a `anon public key` em `Project Settings > API`.
+3. Copie a `service_role key`. Ela será usada apenas no backend e no bot.
+4. Em `Authentication > Providers`, mantenha `Email` habilitado para login por e-mail e senha.
 
-Observação:
+## Como configurar as tabelas e migrations
 
-- Quando `DISCORD_GENERAL_CREATORS_CHANNEL_ID` não estiver preenchido, o sistema usa `DISCORD_NOTICES_CHANNEL_ID` como fallback para avisos gerais.
-- Para o painel completo de avisos e registros do Discord, aplique também estas migrations, nesta ordem:
-- [supabase/migrations/202605011020_discord_log_pending_enum.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/migrations/202605011020_discord_log_pending_enum.sql)
-- [supabase/migrations/202605011030_notice_discord_delivery.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/migrations/202605011030_notice_discord_delivery.sql)
-- Essa separação é necessária porque o PostgreSQL exige que o novo valor do enum seja confirmado antes de ser usado nas alterações seguintes.
+No `SQL Editor` do Supabase, execute os arquivos nesta ordem:
 
-Permissões necessárias do bot no canal de avisos:
+1. `supabase/migrations/202604301900_initial_schema.sql`
+2. `supabase/migrations/202605011020_discord_log_pending_enum.sql`
+3. `supabase/migrations/202605011030_notice_discord_delivery.sql`
+4. `supabase/migrations/202605011130_discord_bot_tickets.sql`
 
-- Ver canais
-- Enviar mensagens
-- Ler histórico de mensagens
-- Inserir links
-- Anexar arquivos, se necessário
+As migrations cobrem:
 
-Na Vercel:
+- perfis, creators, inscrições, salas e métricas
+- anexos e reviews de métricas
+- avisos internos
+- configurações e logs do Discord
+- tickets do Discord
+- painéis publicados pelo bot
+- logs próprios do bot
 
-1. Abra o projeto.
-2. Vá em `Settings > Environment Variables`.
-3. Cadastre todas as variáveis acima para `Production`, `Preview` e, se quiser, `Development`.
-4. Depois de alterar qualquer variável, faça um novo deploy para que o ambiente atualizado seja aplicado.
+### Tabelas adicionais do bot
 
-## 6. Como rodar o projeto localmente
+`202605011130_discord_bot_tickets.sql` cria:
 
-1. Instale dependências:
+- `creator_tickets`
+- `discord_panels`
+- `discord_bot_logs`
+
+Também cria:
+
+- enum `creator_ticket_status`
+- índice único para impedir mais de um ticket aberto por usuário
+- policies RLS para leitura e gestão pelas áreas autorizadas
+
+## Como configurar as policies RLS
+
+As policies já estão incluídas nas migrations. Depois de aplicar os arquivos, confirme no Supabase:
+
+- `profiles`: usuário vê o próprio perfil; staff vê tudo
+- `creators`: creator vê o próprio cadastro; staff gerencia todos
+- `creator_rooms`: creator vê a própria sala; staff gerencia todas
+- `metric_submissions`: creator vê e envia apenas as próprias métricas; staff revisa tudo
+- `metric_attachments`: creator manipula apenas os próprios anexos; staff acessa tudo
+- `creator_notices`: creator vê avisos permitidos para seu contexto; staff cria e visualiza tudo
+- `metric_reviews`: creator vê reviews das próprias métricas; staff registra decisões
+- `discord_settings`: staff visualiza; admin geral pode alterar
+- `discord_message_logs`: staff acompanha o resultado dos envios
+- `creator_tickets`: staff gerencia tickets; creator vê apenas o próprio ticket vinculado ao `discord_id`
+- `discord_panels`: staff acompanha o painel publicado
+- `discord_bot_logs`: staff acompanha logs do bot
+
+## Como criar o bucket de uploads
+
+O bucket é criado pela migration inicial com estas regras:
+
+- nome: `metric-attachments`
+- privado (`public = false`)
+- formatos aceitos: `PNG`, `JPG`, `JPEG`, `WEBP`
+- limite por arquivo: `5 MB`
+- estrutura de pasta: `creator_id/arquivo.ext`
+
+As policies do Storage garantem que:
+
+- creators só enviem e leiam arquivos da própria pasta
+- admins e responsáveis creators possam visualizar e administrar anexos
+
+## Como preparar o primeiro administrador
+
+1. Em `Authentication > Users`, crie o usuário com o e-mail `diretorsnow@coliseurp.br`.
+2. Defina a senha diretamente no Supabase Auth. Não existe senha fixa no código.
+3. Depois de criar o usuário, execute `supabase/seeds/initial_admin.sql`.
+4. Esse script ajusta o perfil para `admin_general`.
+5. O usuário `Snow` será direcionado à Central de Creators após o login.
+
+## Como rodar o site localmente
+
+1. Instale as dependências:
 
 ```bash
 npm install
@@ -161,8 +159,8 @@ No PowerShell:
 Copy-Item .env.example .env.local
 ```
 
-3. Preencha as variáveis do Supabase e Discord.
-4. Rode o projeto:
+3. Preencha as variáveis do Supabase e do Discord.
+4. Rode o site:
 
 ```bash
 npm run dev
@@ -170,80 +168,197 @@ npm run dev
 
 5. Abra [http://localhost:3000](http://localhost:3000).
 
-### Modo mock para desenvolvimento
+### Fallback de desenvolvimento
 
-Se `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` não estiverem configuradas, o app entra em modo demo automaticamente em ambiente local. Nesse modo:
+- Se `NEXT_PUBLIC_SUPABASE_URL` e `NEXT_PUBLIC_SUPABASE_ANON_KEY` não estiverem configuradas, o site entra em modo demo em ambiente local.
+- Se o bot estiver sem `NEXT_PUBLIC_SUPABASE_URL` ou `SUPABASE_SERVICE_ROLE_KEY`, tickets, painéis e logs usam fallback em memória apenas para desenvolvimento.
 
-- o login real é substituído por botões de perfis demo
-- dados aparecem mockados
-- nenhuma alteração real é persistida
+## Como rodar o bot localmente
 
-Esse fallback existe só para desenvolvimento. Em produção, o deploy deve usar o Supabase configurado.
+O bot roda separado do site.
 
-## 7. Como fazer deploy na Vercel
+Scripts disponíveis:
 
-1. Suba o repositório para GitHub.
-2. Na [Vercel](https://vercel.com/), clique em `Add New Project`.
-3. Importe o repositório.
-4. Configure as variáveis de ambiente listadas acima.
-5. Garanta que a migration do Supabase já tenha sido executada.
-6. Faça o deploy.
+```bash
+npm run bot:dev
+npm run bot:start
+```
 
-Não é necessário `vercel.json` extra para este caso; o projeto já usa o fluxo padrão de Next.js compatível com a Vercel.
+O entrypoint fica em `src/bot/index.ts`.
 
-## 8. Como preparar o primeiro administrador
+Na inicialização, o bot:
 
-1. No `Authentication > Users` do Supabase, crie o usuário com o e-mail `diretorsnow@coliseurp.br`.
-2. Defina a senha diretamente no Supabase Auth. Não existe senha fixa no código.
-3. Depois de criar o usuário, execute o script [supabase/seeds/initial_admin.sql](/C:/Users/Dev%20Snow/Documents/New%20project%203/supabase/seeds/initial_admin.sql).
-4. O script promove o perfil para `admin_general`, que é o papel interno equivalente ao Admin Geral da interface.
-5. Após isso, o login desse usuário será direcionado para a Central de Creators.
+- valida variáveis obrigatórias
+- cria o client do Discord com `Guilds` e `GuildMembers`
+- registra eventos e interações
+- conecta ao Discord com `DISCORD_BOT_TOKEN`
 
-## Auth, backend e segurança
+Logs esperados:
 
-- Login: Supabase Auth com email/senha.
-- Perfis:
-  - `admin_general`
-  - `responsavel_creators`
-  - `creator`
-- Sessão do usuário comum usa a chave pública (`anon key`) via Supabase SSR.
-- Operações privilegiadas usam `SUPABASE_SERVICE_ROLE_KEY` apenas no servidor.
-- Integração com Discord acontece exclusivamente no backend.
-- Os IDs de canais do Discord ficam apenas no ambiente do servidor e são resolvidos por finalidade antes de cada envio.
-- Após o login, o sistema valida o `profile` do usuário antes de liberar a área correta.
-- Usuário autenticado sem `profile`, com papel inválido ou com cadastro incompleto volta para a tela de login com mensagem amigável.
+- `Bot Creators Coliseu online como ...`
+- `Auto cargo Cidadão ativado.`
+- `Sistema de tickets carregado.`
+- `Painel de tickets pronto para publicação.`
 
-## API Routes criadas
+## Funcionalidades do bot
 
-- `POST /api/metrics/submit`
-- `POST /api/storage/metric-attachments`
-- `POST /api/metrics/[id]/approve`
-- `POST /api/metrics/[id]/deny`
-- `POST /api/notices/individual`
-- `POST /api/notices/general`
-- `POST /api/discord/send`
+### 1. Cargo automático ao entrar
 
-## Fluxo de aprovação e negação de métricas
+Quando um novo membro entra no servidor:
 
-Quando uma métrica é aprovada ou negada:
+- o evento `guildMemberAdd` é acionado
+- o bot tenta adicionar `DISCORD_CITIZEN_ROLE_ID`
+- o resultado é registrado em log
 
-1. O status é salvo em `metric_submissions`.
-2. O review é registrado em `metric_reviews`.
-3. Um aviso interno é criado em `creator_notices`.
-4. O backend tenta enviar mensagem no canal individual do creator no Discord.
-5. O resultado é salvo em `discord_message_logs`.
+Logs previstos:
 
-Se o Discord falhar:
+- `member_join_role_assigned`
+- `member_join_role_failed`
 
-- a aprovação ou negação continua salva no Supabase
-- o erro é registrado em `discord_message_logs`
-- o painel continua mostrando o resultado principal e o status do Discord separadamente
+### 2. Sistema de tickets
 
-## Observações de operação
+O painel de tickets publica uma mensagem no canal `DISCORD_TICKET_CHANNEL_ID` com o botão:
 
-- Para onboarding real, crie o usuário em `Auth`, confirme o `profile` em `profiles` e associe o creator em `creators`.
-- O trigger em `creators` cria automaticamente uma sala em `creator_rooms`.
-- O bucket é privado; para visualização, o app gera signed URLs com sessão autenticada.
+- `Criar sala creator`
+
+`customId` usado:
+
+- `creator_ticket_create`
+
+Ao clicar:
+
+- o bot verifica se já existe ticket aberto
+- cria um canal privado na categoria `DISCORD_CREATORS_CATEGORY_ID`
+- aplica permissões para opener, staff configurada e bot
+- registra o ticket em `creator_tickets`
+- envia mensagem inicial com botão de fechamento
+
+`customId` do fechamento:
+
+- `creator_ticket_close`
+
+Ao fechar:
+
+- staff, admin ou o próprio creator podem encerrar
+- o ticket é marcado como `closed` ou `archived`
+- o canal é movido para `DISCORD_ARCHIVED_TICKETS_CATEGORY_ID` quando existir
+- se não existir categoria de arquivados, o canal é removido
+
+Logs previstos:
+
+- `ticket_panel_published`
+- `ticket_panel_failed`
+- `ticket_created`
+- `ticket_create_failed`
+- `ticket_duplicate_blocked`
+- `ticket_closed`
+- `ticket_close_failed`
+
+### 3. Publicação do painel
+
+O projeto já possui rota segura para o painel administrativo:
+
+- `POST /api/discord/setup-tickets`
+
+Ela:
+
+- publica a mensagem no canal de tickets
+- reutiliza a mensagem anterior quando possível
+- evita duplicidade salvando `message_id` em `discord_panels`
+
+O painel administrativo também já possui o botão:
+
+- `Publicar painel de tickets`
+
+## Integração com o site
+
+Na Central de Creators e em Configurações do Discord, o painel já mostra:
+
+- total de tickets abertos
+- tickets fechados
+- tickets arquivados
+- últimos tickets criados
+- status do painel publicado
+- configuração dos canais do Discord
+
+## Permissões necessárias do bot no Discord
+
+O bot precisa destas permissões:
+
+- View Channels
+- Send Messages
+- Read Message History
+- Manage Channels
+- Manage Roles
+- Embed Links
+- Attach Files
+- Use Application Commands
+
+Também garanta:
+
+- o cargo do bot acima do cargo Cidadão
+- o cargo do bot acima de qualquer cargo que ele precise gerenciar
+- permissão para criar canais na categoria dos creators
+- permissão para ver e enviar mensagens no canal de tickets
+- permissão para ver e enviar mensagens no canal de avisos
+
+## Discord Developer Portal
+
+No [Discord Developer Portal](https://discord.com/developers/applications):
+
+1. Abra a aplicação do bot.
+2. Vá em `Bot`.
+3. Ative `Server Members Intent / Guild Members Intent`.
+4. Salve as alterações.
+
+Isso é obrigatório para o auto cargo funcionar ao detectar novos membros no servidor.
+
+## Como fazer deploy do site na Vercel
+
+1. Suba o projeto para o GitHub.
+2. Na [Vercel](https://vercel.com/), importe o repositório.
+3. Vá em `Settings > Environment Variables`.
+4. Cadastre todas as variáveis do site e do backend.
+5. Faça um novo deploy sempre que alterar variáveis.
+
+Observações:
+
+- o site continua na Vercel
+- a Vercel não deve ser usada para manter o bot conectado via WebSocket/Gateway
+
+## Como deixar o bot 24h online
+
+O bot deve rodar em um serviço próprio, como:
+
+- Railway
+- Render
+- Fly.io
+- VPS
+
+Fluxo recomendado:
+
+1. Suba o projeto no GitHub.
+2. Crie um serviço Node.js no provedor escolhido.
+3. Defina o start command:
+
+```bash
+npm run bot:start
+```
+
+4. Configure as variáveis de ambiente do bot e do Supabase.
+5. Acompanhe os logs do serviço.
+6. Confirme se aparece:
+
+```text
+Bot Creators Coliseu online como ...
+```
+
+Importante:
+
+- o site fica na Vercel
+- o banco fica no Supabase
+- o bot fica separado em processo Node.js contínuo
+- não use a Vercel para manter o bot online
 
 ## Scripts
 
@@ -252,4 +367,6 @@ npm run dev
 npm run build
 npm run start
 npm run lint
+npm run bot:dev
+npm run bot:start
 ```

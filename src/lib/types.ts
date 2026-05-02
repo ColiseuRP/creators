@@ -5,6 +5,8 @@ export type MetricStatus = "pending" | "approved" | "rejected";
 export type NoticeType = "info" | "success" | "warning";
 export type NoticeTargetType = "individual" | "general" | "category";
 export type DiscordLogStatus = "pending" | "sent" | "failed" | "skipped";
+export type CreatorTicketStatus = "open" | "closed" | "archived";
+export type DiscordPanelType = "creator_ticket_panel";
 
 export interface Profile {
   id: string;
@@ -151,6 +153,47 @@ export interface DiscordMessageLog {
   sent_at: string;
   attempted_at?: string | null;
   delivered_at?: string | null;
+}
+
+export interface CreatorTicket {
+  id: string;
+  discord_user_id: string;
+  discord_username: string;
+  channel_id: string;
+  status: CreatorTicketStatus;
+  created_at: string;
+  closed_at: string | null;
+  closed_by: string | null;
+  close_reason: string | null;
+}
+
+export interface DiscordPanel {
+  id: string;
+  type: DiscordPanelType;
+  channel_id: string;
+  message_id: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DiscordBotLog {
+  id: string;
+  type: string;
+  discord_user_id: string | null;
+  channel_id: string | null;
+  status: "success" | "failed" | "info";
+  message: string;
+  error_message: string | null;
+  created_at: string;
+}
+
+export interface DiscordTicketSnapshot {
+  openCount: number;
+  closedCount: number;
+  archivedCount: number;
+  totalCount: number;
+  recentTickets: CreatorTicket[];
+  panel: DiscordPanel | null;
 }
 
 export interface SessionUser {
