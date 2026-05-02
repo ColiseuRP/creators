@@ -8,6 +8,10 @@ import type {
   Profile,
 } from "../lib/types";
 import { slugify } from "../lib/utils";
+import {
+  INVALID_CREATOR_APPLICATION_ID_MESSAGE,
+  isCreatorApplicationUuid,
+} from "./creator-applications";
 
 type DatabaseClient = SupabaseClient | null;
 
@@ -34,6 +38,10 @@ interface CreateCreatorApplicationInput {
   observations?: string | null;
   status?: CreatorApplicationStatus;
   source?: CreatorApplicationSource;
+}
+
+interface CreateCreatorApplicationOptions {
+  fallbackToMemory?: boolean;
 }
 
 interface ReviewCreatorApplicationInput {
@@ -116,6 +124,12 @@ function getNowIso() {
 
 function createMemoryId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function assertPersistentApplicationId(applicationId: string) {
+  if (!isCreatorApplicationUuid(applicationId)) {
+    throw new Error(INVALID_CREATOR_APPLICATION_ID_MESSAGE);
+  }
 }
 
 function normalizeSource(source: CreatorApplicationSource | null | undefined) {
@@ -283,6 +297,8 @@ export async function findCreatorApplicationById(
     );
   }
 
+  assertPersistentApplicationId(applicationId);
+
   const { data, error } = await client
     .from("creator_applications")
     .select("*")
@@ -303,10 +319,16 @@ export async function findCreatorApplicationById(
 export async function createCreatorApplicationRecord(
   client: DatabaseClient,
   input: CreateCreatorApplicationInput,
+  options?: CreateCreatorApplicationOptions,
 ) {
   const createdAt = getNowIso();
+  const fallbackToMemory = options?.fallbackToMemory ?? true;
 
   if (!client) {
+    if (!fallbackToMemory) {
+      throw new Error("Não foi possível salvar a inscrição no Supabase.");
+    }
+
     const application = normalizeApplication({
       id: createMemoryId("application"),
       name: input.name,
@@ -384,14 +406,16 @@ export async function createCreatorApplicationRecord(
   }
 
   if (error) {
-    if (isMissingTableError(error)) {
-      return createCreatorApplicationRecord(null, input);
+    if (isMissingTableError(error) && fallbackToMemory) {
+      return createCreatorApplicationRecord(null, input, options);
     }
 
     throw new Error(error.message);
   }
 
-  return normalizeApplication(data as CreatorApplication);
+  const application = normalizeApplication(data as CreatorApplication);
+  assertPersistentApplicationId(application.id);
+  return application;
 }
 
 export async function updateCreatorApplicationReviewMessage(
@@ -411,6 +435,8 @@ export async function updateCreatorApplicationReviewMessage(
     current.review_message_id = input.reviewMessageId ?? null;
     return current;
   }
+
+  assertPersistentApplicationId(input.applicationId);
 
   const { data, error } = await client
     .from("creator_applications")
@@ -467,6 +493,8 @@ export async function reviewCreatorApplicationRecord(
       input.decision === "rejected" ? input.rejectionReason ?? null : null;
     return current;
   }
+
+  assertPersistentApplicationId(input.applicationId);
 
   const updatePayload = {
     status: input.decision,

@@ -316,11 +316,16 @@ Fluxo:
 
 - o painel exibe o botão `Participar Creators`
 - ao clicar, o bot abre um modal com os campos principais da inscrição
-- a resposta é salva em `creator_applications` com `source = 'discord'`
+- a resposta é salva primeiro no Supabase em `creator_applications` com `source = 'discord'`
 - o bot envia um embed para `DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID`
 - a equipe pode aprovar ou negar diretamente pelo Discord
 - na aprovação, o bot tenta enviar DM e adicionar `DISCORD_APPROVED_CREATOR_ROLE_ID`
 - na negação, o bot pede um motivo e envia DM quando possível
+
+Observação importante:
+
+- depois desta correção, apague no canal de análise as mensagens antigas que ainda usam botões com IDs temporários e publique um novo painel do formulário
+- inscrições antigas com botões no formato `application-...` não devem mais ser reutilizadas para aprovação ou negação
 
 Rota segura disponível:
 

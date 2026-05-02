@@ -21,6 +21,8 @@ import {
   CREATOR_APPLICATION_REJECT_MODAL_PREFIX,
   CREATOR_APPLICATION_REJECT_REASON_FIELD_ID,
   extractCreatorApplicationIdFromCustomId,
+  INVALID_CREATOR_APPLICATION_ID_MESSAGE,
+  isCreatorApplicationUuid,
 } from "../../shared/creator-applications";
 import {
   createCreatorApplicationRecord,
@@ -32,6 +34,9 @@ import {
 import { dispatchBotLog } from "../services/log-dispatcher";
 import { logBotError } from "../services/logger";
 import type { BotContext } from "../types";
+
+const CREATOR_APPLICATION_REVIEW_FAILURE_MESSAGE =
+  "Não foi possível analisar esta inscrição. Verifique os logs do bot.";
 
 function isGuildMember(
   member: GuildMember | ButtonInteraction["member"] | ModalSubmitInteraction["member"],
@@ -194,6 +199,17 @@ async function addApprovedRoleToMember(
   await member.roles.add(context.config.approvedCreatorRoleId);
 }
 
+function getCreatorApplicationReviewErrorMessage(error: unknown) {
+  if (
+    error instanceof Error &&
+    error.message === INVALID_CREATOR_APPLICATION_ID_MESSAGE
+  ) {
+    return error.message;
+  }
+
+  return CREATOR_APPLICATION_REVIEW_FAILURE_MESSAGE;
+}
+
 async function finalizeDiscordApplicationReview(
   context: BotContext,
   interaction: ButtonInteraction | ModalSubmitInteraction,
@@ -203,6 +219,10 @@ async function finalizeDiscordApplicationReview(
     rejectionReason?: string | null;
   },
 ) {
+  if (!isCreatorApplicationUuid(input.applicationId)) {
+    throw new Error(INVALID_CREATOR_APPLICATION_ID_MESSAGE);
+  }
+
   const application = await findCreatorApplicationById(context.supabase, input.applicationId, {
     fallbackToMemory: false,
   });
@@ -419,6 +439,8 @@ export async function handleCreatorApplicationSubmit(
       contentLinks: socialLinks,
       observations: "Inscrição enviada pelo formulário oficial do Discord.",
       source: "discord",
+    }, {
+      fallbackToMemory: false,
     });
 
     await dispatchBotLog(context, {
@@ -511,6 +533,14 @@ export async function handleCreatorApplicationApprove(
     return;
   }
 
+  if (!isCreatorApplicationUuid(applicationId)) {
+    await interaction.reply({
+      content: INVALID_CREATOR_APPLICATION_ID_MESSAGE,
+      ephemeral: true,
+    });
+    return;
+  }
+
   await interaction.deferReply({ ephemeral: true });
 
   try {
@@ -526,9 +556,8 @@ export async function handleCreatorApplicationApprove(
           : "Inscrição aprovada com sucesso.",
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
     logBotError("Falha ao aprovar inscrição pelo Discord.", error);
+    const errorMessage = getCreatorApplicationReviewErrorMessage(error);
 
     if (interaction.replied || interaction.deferred) {
       await interaction.editReply({
@@ -552,6 +581,14 @@ export async function handleCreatorApplicationRejectButton(
   if (!interaction.inCachedGuild() || !canReviewApplications(context, interaction.member)) {
     await interaction.reply({
       content: "Você não tem permissão para analisar inscrições.",
+      ephemeral: true,
+    });
+    return;
+  }
+
+  if (!isCreatorApplicationUuid(applicationId)) {
+    await interaction.reply({
+      content: INVALID_CREATOR_APPLICATION_ID_MESSAGE,
       ephemeral: true,
     });
     return;
@@ -602,6 +639,14 @@ export async function handleCreatorApplicationRejectSubmit(
     return;
   }
 
+  if (!isCreatorApplicationUuid(applicationId)) {
+    await interaction.reply({
+      content: INVALID_CREATOR_APPLICATION_ID_MESSAGE,
+      ephemeral: true,
+    });
+    return;
+  }
+
   const rejectionReason = interaction.fields
     .getTextInputValue(CREATOR_APPLICATION_REJECT_REASON_FIELD_ID)
     .trim();
@@ -630,9 +675,8 @@ export async function handleCreatorApplicationRejectSubmit(
           : "Inscrição negada com sucesso.",
     });
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
-
     logBotError("Falha ao negar inscrição pelo Discord.", error);
+    const errorMessage = getCreatorApplicationReviewErrorMessage(error);
 
     await interaction.editReply({
       content: errorMessage,

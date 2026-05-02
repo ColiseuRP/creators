@@ -13,10 +13,19 @@ export const CREATOR_APPLICATION_APPROVE_PREFIX = "creator_application_approve:"
 export const CREATOR_APPLICATION_REJECT_PREFIX = "creator_application_reject:";
 export const CREATOR_APPLICATION_REJECT_MODAL_PREFIX =
   "creator_application_reject_modal:";
+export const INVALID_CREATOR_APPLICATION_ID_MESSAGE =
+  "Esta inscrição possui um ID inválido. Gere uma nova inscrição ou publique o formulário novamente.";
 
 const CREATOR_APPLICATION_EMBED_COLOR = 0xf5c542;
 const CREATOR_APPLICATION_APPROVED_COLOR = 0x2e8b57;
 const CREATOR_APPLICATION_REJECTED_COLOR = 0x8b1e1e;
+const CREATOR_APPLICATION_UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function isCreatorApplicationUuid(value: string | null | undefined) {
+  const normalized = value?.trim();
+  return Boolean(normalized && CREATOR_APPLICATION_UUID_REGEX.test(normalized));
+}
 
 function truncateFieldValue(value: string, maxLength = 1000) {
   const normalized = value.trim();

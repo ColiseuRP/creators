@@ -1,7 +1,0 @@
-[discord-bot] DISCORD_STAFF_ROLE_IDS não foi configurado. Apenas administradores do servidor e o creator dono do ticket terão acesso de gerenciamento.
-(node:15548) Warning: Supplying "ephemeral" for interaction response options is deprecated. Utilize flags instead.
-(Use `node --trace-warnings ...` to show where the warning was created)
-[discord-bot] Não foi possível fechar o ticket 1499935621760815164. Error: Canal do ticket não está mais disponível.
-    at Timeout._onTimeout (C:\Users\Dev Snow\Documents\New project 3\src\bot\interactions\creator-ticket-close.ts:116:17)
-    at listOnTimeout (node:internal/timers:605:17)
-    at process.processTimers (node:internal/timers:541:7)
