@@ -3,8 +3,10 @@ import type { CreatorTicketType } from "../lib/types";
 export const CREATOR_TICKET_PANEL_TYPE = "creator_ticket_panel";
 export const CREATOR_TICKET_CREATE_CUSTOM_ID = "creator_ticket_create";
 export const CREATOR_TICKET_TYPE_SELECT_CUSTOM_ID = "creator_ticket_type_select";
-export const CREATOR_TICKET_STREAMER_VALUE = "creator_ticket_streamer";
-export const CREATOR_TICKET_INFLUENCER_VALUE = "creator_ticket_influencer";
+export const CREATOR_TICKET_STREAMER_VALUE = "streamer";
+export const CREATOR_TICKET_INFLUENCER_VALUE = "influencer";
+export const LEGACY_CREATOR_TICKET_STREAMER_VALUE = "creator_ticket_streamer";
+export const LEGACY_CREATOR_TICKET_INFLUENCER_VALUE = "creator_ticket_influencer";
 export const CREATOR_TICKET_CLOSE_CUSTOM_ID = "creator_ticket_close";
 export const CREATOR_TICKET_STAFF_MENU_CUSTOM_ID = "creator_ticket_staff_menu";
 export const CREATOR_TICKET_CLAIM_CUSTOM_ID = "creator_ticket_claim";
@@ -117,8 +119,10 @@ export function parseCreatorTicketTypeValue(
 ): CreatorTicketType | null {
   switch (value) {
     case CREATOR_TICKET_STREAMER_VALUE:
+    case LEGACY_CREATOR_TICKET_STREAMER_VALUE:
       return "streamer";
     case CREATOR_TICKET_INFLUENCER_VALUE:
+    case LEGACY_CREATOR_TICKET_INFLUENCER_VALUE:
       return "influencer";
     default:
       return null;

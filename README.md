@@ -366,6 +366,12 @@ No site, a página `Fila de inscrições` também permite:
 - visualizar a origem `Site` ou `Discord`
 - publicar o painel do formulário sem sair da central
 
+Após alterar o fluxo do menu de atendimento:
+
+- faça redeploy ou restart do bot no Railway
+- apague o painel antigo do canal de tickets no Discord, se ele ainda estiver usando a versão anterior
+- publique novamente o painel com `/setup-tickets`
+
 ## Integração com o site
 
 Na Central de Creators e em Configurações do Discord, o painel já mostra:

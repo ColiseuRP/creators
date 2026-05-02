@@ -78,27 +78,32 @@ export async function handleCreatorTicketCreate(
     return;
   }
 
-  if (interaction.guild.id !== context.config.guildId) {
-    await interaction.reply({
-      content: "Este menu não está vinculado ao servidor configurado.",
-      ephemeral: true,
-    });
-    return;
-  }
-
-  const ticketType = parseCreatorTicketTypeValue(interaction.values[0]);
-
-  if (!ticketType) {
-    await interaction.reply({
-      content: "Tipo de atendimento inválido. Tente novamente pelo painel.",
-      ephemeral: true,
-    });
-    return;
-  }
-
   await interaction.deferReply({ ephemeral: true });
 
+  if (interaction.guild.id !== context.config.guildId) {
+    await interaction.editReply({
+      content: "Este menu não está vinculado ao servidor configurado.",
+    });
+    return;
+  }
+
+  const selectedType = interaction.values[0] ?? "";
+  let ticketType: "streamer" | "influencer" | null = null;
+
   try {
+    logBotInfo(
+      `[Creators Coliseu] Tipo de ticket selecionado por ${interaction.user.tag}: ${selectedType}`,
+    );
+
+    ticketType = parseCreatorTicketTypeValue(selectedType);
+
+    if (!ticketType) {
+      await interaction.editReply({
+        content: "Tipo de atendimento inválido. Tente novamente.",
+      });
+      return;
+    }
+
     await dispatchBotLog(context, {
       type: "ticket_type_selected",
       discordUserId: interaction.user.id,
@@ -141,11 +146,18 @@ export async function handleCreatorTicketCreate(
     const displayName = isGuildMember(member)
       ? member.displayName
       : interaction.user.username;
+
+    logBotInfo(
+      `[Creators Coliseu] Criando ticket ${ticketType} para ${interaction.user.tag}`,
+    );
+
     const channel = await createTicketChannel(context, interaction.guild, interaction.user.id, {
       ticketType,
       displayName,
       botUserId,
     });
+
+    logBotInfo(`[Creators Coliseu] Ticket criado: ${channel.id}`);
 
     let ticketRecord;
 
@@ -218,7 +230,7 @@ export async function handleCreatorTicketCreate(
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    logBotError(`Falha ao criar ticket para ${interaction.user.tag}.`, error);
+    logBotError(`[Creators Coliseu] Erro ao criar ticket: ${errorMessage}`, error);
 
     await dispatchBotLog(context, {
       type: "ticket_create_failed",
