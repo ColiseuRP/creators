@@ -87,6 +87,7 @@ No `SQL Editor` do Supabase, execute os arquivos nesta ordem:
 5. `supabase/migrations/202605011340_bootstrap_discord_bot_tables.sql`
 6. `supabase/migrations/202605011430_ticket_type_support.sql`
 7. `supabase/migrations/202605011530_creator_application_discord_flow.sql`
+8. `supabase/migrations/202605021030_ticket_staff_controls.sql`
 
 As migrations cobrem:
 
@@ -111,6 +112,7 @@ Se a produção estiver mostrando erros como `Could not find the table 'public.c
 Para liberar o filtro por tipo de atendimento, a gravação de `ticket_type` e os campos novos de log do bot, aplique também `202605011430_ticket_type_support.sql`.
 
 Para liberar a aprovação e negação de inscrições pelo site e pelo Discord, além do formulário oficial do bot, aplique também `202605011530_creator_application_discord_flow.sql`.
+Para liberar o responsável que assumiu o ticket, o motivo de fechamento e os campos extras dos logs da staff, aplique também `202605021030_ticket_staff_controls.sql`.
 
 Também cria:
 
@@ -257,6 +259,9 @@ O painel de tickets publica um embed no canal `DISCORD_TICKET_CHANNEL_ID` com um
 
 - `creator_ticket_type_select`
 - `creator_ticket_close`
+- `creator_ticket_staff_menu`
+- `creator_ticket_claim`
+- `creator_ticket_staff_action_select`
 
 Opções do painel:
 
@@ -267,18 +272,33 @@ Ao selecionar uma opção:
 
 - o bot verifica se já existe ticket aberto para o usuário
 - cria um canal privado na categoria `DISCORD_CREATORS_CATEGORY_ID`
-- usa o formato `ticket-influencer-{usuario}` ou `ticket-streamer-{usuario}`
+- tenta usar o formato `📸・ticket-influencer-{usuario}` ou `🎥・ticket-streamer-{usuario}`
+- se o Discord recusar o emoji no nome do canal, usa fallback com `foto-` ou `video-`
 - aplica permissões para o creator, o cargo principal `DISCORD_RESPONSAVEL_STAFF_ROLE_ID`, cargos extras em `DISCORD_STAFF_ROLE_IDS` e o próprio bot
 - registra o ticket em `creator_tickets` com `ticket_type`
-- envia mensagem inicial específica para influencer ou streamer
+- envia mensagem inicial específica para influencer ou streamer com os botões `Fechar ticket`, `Menu Staff` e `Assumir ticket`
 - marca o cargo responsável na abertura do atendimento
 
 Ao fechar:
 
-- staff, admin ou o próprio creator podem encerrar
+- staff, admin ou o próprio creator podem iniciar o fechamento
+- o fechamento abre um modal obrigatório para informar o motivo
 - o ticket é marcado como `closed` ou `archived`
 - o canal é movido para `DISCORD_ARCHIVED_TICKETS_CATEGORY_ID` quando existir
 - se não existir categoria de arquivados, o canal é removido
+
+No `Menu Staff`:
+
+- apenas o cargo `DISCORD_RESPONSAVEL_STAFF_ROLE_ID` e cargos extras em `DISCORD_STAFF_ROLE_IDS` podem usar
+- a equipe pode alterar o nome do canal com sanitização segura
+- a equipe pode enviar uma notificação privada ao creator que abriu o ticket
+
+No botão `Assumir ticket`:
+
+- apenas a staff responsável pode usar
+- o bot salva `claimed_by`, `claimed_by_name` e `claimed_at`
+- o canal recebe confirmação de que o ticket foi assumido
+- outro responsável não consegue assumir novamente sem aviso
 
 Logs previstos:
 
@@ -289,6 +309,13 @@ Logs previstos:
 - `ticket_influencer_created`
 - `ticket_create_failed`
 - `ticket_duplicate_blocked`
+- `ticket_claimed`
+- `ticket_claim_failed`
+- `ticket_renamed`
+- `ticket_rename_failed`
+- `ticket_notify_sent`
+- `ticket_notify_failed`
+- `ticket_close_modal_opened`
 - `ticket_closed`
 - `ticket_close_failed`
 
@@ -453,6 +480,9 @@ Importante:
 - o banco fica no Supabase
 - o bot fica separado em processo Node.js contínuo
 - não use a Vercel para manter o bot online
+- depois desta atualização dos tickets, faça redeploy ou restart do bot no Railway
+- publique novamente o painel de tickets, se necessário, para refletir os novos botões
+- teste um ticket streamer e um ticket influencer após o deploy
 
 ## Scripts
 

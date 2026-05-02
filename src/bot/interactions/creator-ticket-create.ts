@@ -1,16 +1,18 @@
 import {
   ChannelType,
-  GuildMember,
+  type Guild,
   type StringSelectMenuInteraction,
+  type TextChannel,
 } from "discord.js";
 
 import {
+  closeCreatorTicketRecord,
   createCreatorTicketRecord,
   findOpenCreatorTicketByDiscordUser,
 } from "../../shared/discord-ticket-store";
 import {
   buildCreatedTicketMessage,
-  buildCreatorTicketChannelName,
+  buildCreatorTicketChannelNameCandidates,
   buildCreatorTicketWelcomeMessage,
   buildExistingTicketMessage,
   buildTicketCreationErrorMessage,
@@ -21,11 +23,47 @@ import { dispatchBotLog } from "../services/log-dispatcher";
 import { logBotError, logBotInfo } from "../services/logger";
 import type { BotContext } from "../types";
 import { buildCreatorTicketOverwrites } from "../utils/build-ticket-overwrites";
+import { isGuildMember } from "../utils/is-responsible-staff";
 
-function isGuildMember(
-  member: GuildMember | StringSelectMenuInteraction["member"],
-): member is GuildMember {
-  return member instanceof GuildMember;
+async function createTicketChannel(
+  context: BotContext,
+  guild: Guild,
+  requesterId: string,
+  input: {
+    ticketType: "streamer" | "influencer";
+    displayName: string;
+    botUserId: string;
+  },
+) {
+  const candidateNames = buildCreatorTicketChannelNameCandidates(
+    input.ticketType,
+    input.displayName,
+  );
+
+  let lastError: unknown = null;
+
+  for (const channelName of candidateNames) {
+    try {
+      const channel = await guild.channels.create({
+        name: channelName,
+        type: ChannelType.GuildText,
+        parent: context.config.creatorsCategoryId,
+        topic: `${getCreatorTicketTypeAudienceLabel(input.ticketType)} | Creators Coliseu | ${requesterId}`,
+        permissionOverwrites: buildCreatorTicketOverwrites({
+          guildId: guild.id,
+          requesterId,
+          botUserId: input.botUserId,
+          staffRoleIds: context.config.staffRoleIds,
+        }),
+      });
+
+      return channel as TextChannel;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError ?? new Error("Não foi possível criar o canal do ticket.");
 }
 
 export async function handleCreatorTicketCreate(
@@ -76,20 +114,19 @@ export async function handleCreatorTicketCreate(
     );
 
     if (existingTicket) {
-      const duplicateMessage = buildExistingTicketMessage(existingTicket.channel_id);
-
       await dispatchBotLog(context, {
         type: "ticket_duplicate_blocked",
         discordUserId: interaction.user.id,
         discordUsername: interaction.user.tag,
         channelId: existingTicket.channel_id,
+        ticketId: existingTicket.id,
         ticketType: existingTicket.ticket_type ?? ticketType,
         status: "info",
         message: `Tentativa de ticket duplicado bloqueada para ${interaction.user.tag}.`,
       });
 
       await interaction.editReply({
-        content: duplicateMessage,
+        content: buildExistingTicketMessage(existingTicket.channel_id),
       });
       return;
     }
@@ -101,32 +138,19 @@ export async function handleCreatorTicketCreate(
     }
 
     const member = interaction.member;
-    const displayName = isGuildMember(member) ? member.displayName : interaction.user.username;
-    const channelName = buildCreatorTicketChannelName(ticketType, displayName);
-
-    const channel = await interaction.guild.channels.create({
-      name: channelName,
-      type: ChannelType.GuildText,
-      parent: context.config.creatorsCategoryId,
-      topic: `${getCreatorTicketTypeAudienceLabel(ticketType)} | Creators Coliseu | ${interaction.user.id}`,
-      permissionOverwrites: buildCreatorTicketOverwrites({
-        guildId: interaction.guild.id,
-        requesterId: interaction.user.id,
-        botUserId,
-        staffRoleIds: context.config.staffRoleIds,
-      }),
+    const displayName = isGuildMember(member)
+      ? member.displayName
+      : interaction.user.username;
+    const channel = await createTicketChannel(context, interaction.guild, interaction.user.id, {
+      ticketType,
+      displayName,
+      botUserId,
     });
 
-    await channel.send(
-      buildCreatorTicketWelcomeMessage({
-        ticketType,
-        userId: interaction.user.id,
-        staffRoleId: context.config.responsavelStaffRoleId,
-      }),
-    );
+    let ticketRecord;
 
     try {
-      await createCreatorTicketRecord(context.supabase, {
+      ticketRecord = await createCreatorTicketRecord(context.supabase, {
         discordUserId: interaction.user.id,
         discordUsername: interaction.user.tag,
         channelId: channel.id,
@@ -150,6 +174,26 @@ export async function handleCreatorTicketCreate(
       throw error;
     }
 
+    try {
+      await channel.send(
+        buildCreatorTicketWelcomeMessage({
+          ticketType,
+          userId: interaction.user.id,
+          staffRoleId: context.config.responsavelStaffRoleId,
+        }),
+      );
+    } catch (error) {
+      await closeCreatorTicketRecord(context.supabase, {
+        channelId: channel.id,
+        status: "closed",
+        closedBy: botUserId,
+        closeReason: "Falha ao publicar a mensagem inicial do ticket.",
+      }).catch(() => null);
+
+      await channel.delete("Falha ao publicar a mensagem inicial do ticket.");
+      throw error;
+    }
+
     const successMessage =
       ticketType === "streamer"
         ? `Ticket streamer criado para ${interaction.user.tag}.`
@@ -162,6 +206,7 @@ export async function handleCreatorTicketCreate(
       discordUserId: interaction.user.id,
       discordUsername: interaction.user.tag,
       channelId: channel.id,
+      ticketId: ticketRecord.id,
       ticketType,
       status: "success",
       message: successMessage,

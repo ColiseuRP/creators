@@ -6,10 +6,27 @@ export const CREATOR_TICKET_TYPE_SELECT_CUSTOM_ID = "creator_ticket_type_select"
 export const CREATOR_TICKET_STREAMER_VALUE = "creator_ticket_streamer";
 export const CREATOR_TICKET_INFLUENCER_VALUE = "creator_ticket_influencer";
 export const CREATOR_TICKET_CLOSE_CUSTOM_ID = "creator_ticket_close";
+export const CREATOR_TICKET_STAFF_MENU_CUSTOM_ID = "creator_ticket_staff_menu";
+export const CREATOR_TICKET_CLAIM_CUSTOM_ID = "creator_ticket_claim";
+export const CREATOR_TICKET_STAFF_ACTION_SELECT_CUSTOM_ID =
+  "creator_ticket_staff_action_select";
+export const CREATOR_TICKET_STAFF_RENAME_VALUE = "creator_ticket_staff_rename";
+export const CREATOR_TICKET_STAFF_NOTIFY_VALUE = "creator_ticket_staff_notify";
+export const CREATOR_TICKET_CLOSE_MODAL_PREFIX = "creator_ticket_close_modal:";
+export const CREATOR_TICKET_RENAME_MODAL_PREFIX = "creator_ticket_rename_modal:";
+export const CREATOR_TICKET_NOTIFY_MODAL_PREFIX = "creator_ticket_notify_modal:";
+export const CREATOR_TICKET_CLOSE_REASON_INPUT_ID = "close_reason";
+export const CREATOR_TICKET_RENAME_INPUT_ID = "new_channel_name";
+export const CREATOR_TICKET_NOTIFY_INPUT_ID = "notify_message";
 export const CREATOR_TICKET_CLOSE_DELAY_MS = 5_000;
 export const SETUP_TICKETS_COMMAND_NAME = "setup-tickets";
 
 const CREATOR_TICKET_EMBED_COLOR = 0xf5c542;
+const STREAMER_TICKET_EMOJI = "\u{1F3A5}";
+const INFLUENCER_TICKET_EMOJI = "\u{1F4F8}";
+const STREAMER_TICKET_EMOJI_PREFIX = `${STREAMER_TICKET_EMOJI}・`;
+const INFLUENCER_TICKET_EMOJI_PREFIX = `${INFLUENCER_TICKET_EMOJI}・`;
+const MAX_DISCORD_CHANNEL_NAME_LENGTH = 90;
 
 export function parseDiscordIdList(value: string | null | undefined) {
   return (value ?? "")
@@ -26,7 +43,73 @@ export function sanitizeTicketChannelSegment(value: string) {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
-  return (normalized || "creator").slice(0, 40);
+  return (normalized || "creator").slice(0, 56);
+}
+
+function truncateChannelName(value: string) {
+  return value.slice(0, MAX_DISCORD_CHANNEL_NAME_LENGTH);
+}
+
+function getTicketChannelBaseSlug(
+  ticketType: CreatorTicketType | null,
+  username: string,
+) {
+  const sanitizedUsername = sanitizeTicketChannelSegment(username);
+
+  switch (ticketType) {
+    case "streamer":
+      return `ticket-streamer-${sanitizedUsername}`;
+    case "influencer":
+      return `ticket-influencer-${sanitizedUsername}`;
+    default:
+      return `ticket-creator-${sanitizedUsername}`;
+  }
+}
+
+function getTicketChannelNameDecorators(ticketType: CreatorTicketType | null) {
+  switch (ticketType) {
+    case "streamer":
+      return {
+        preferredPrefix: STREAMER_TICKET_EMOJI_PREFIX,
+        fallbackPrefix: "video-",
+      };
+    case "influencer":
+      return {
+        preferredPrefix: INFLUENCER_TICKET_EMOJI_PREFIX,
+        fallbackPrefix: "foto-",
+      };
+    default:
+      return {
+        preferredPrefix: "",
+        fallbackPrefix: "",
+      };
+  }
+}
+
+export function buildCreatorTicketChannelNameCandidates(
+  ticketType: CreatorTicketType | null,
+  username: string,
+) {
+  const baseSlug = getTicketChannelBaseSlug(ticketType, username);
+  const decorators = getTicketChannelNameDecorators(ticketType);
+
+  return [
+    truncateChannelName(`${decorators.preferredPrefix}${baseSlug}`),
+    truncateChannelName(`${decorators.fallbackPrefix}${baseSlug}`),
+  ].filter((value, index, items) => Boolean(value) && items.indexOf(value) === index);
+}
+
+export function buildCustomCreatorTicketChannelNameCandidates(
+  ticketType: CreatorTicketType | null,
+  requestedName: string,
+) {
+  const baseSlug = sanitizeTicketChannelSegment(requestedName);
+  const decorators = getTicketChannelNameDecorators(ticketType);
+
+  return [
+    truncateChannelName(`${decorators.preferredPrefix}${baseSlug}`),
+    truncateChannelName(`${decorators.fallbackPrefix}${baseSlug}`),
+  ].filter((value, index, items) => Boolean(value) && items.indexOf(value) === index);
 }
 
 export function parseCreatorTicketTypeValue(
@@ -55,14 +138,6 @@ export function getCreatorTicketTypeLabel(ticketType: CreatorTicketType | null |
 
 export function getCreatorTicketTypeAudienceLabel(ticketType: CreatorTicketType) {
   return ticketType === "streamer" ? "Atendimento Streamer" : "Atendimento Influencer";
-}
-
-export function buildCreatorTicketChannelName(
-  ticketType: CreatorTicketType,
-  username: string,
-) {
-  const prefix = ticketType === "streamer" ? "ticket-streamer" : "ticket-influencer";
-  return `${prefix}-${sanitizeTicketChannelSegment(username)}`.slice(0, 90);
 }
 
 export function buildTicketPanelPayload() {
@@ -124,7 +199,7 @@ export function buildTicketPanelPayload() {
   };
 }
 
-function buildTicketCloseButtonComponent() {
+function buildTicketActionButtons() {
   return [
     {
       type: 1,
@@ -134,6 +209,18 @@ function buildTicketCloseButtonComponent() {
           custom_id: CREATOR_TICKET_CLOSE_CUSTOM_ID,
           label: "Fechar ticket",
           style: 4,
+        },
+        {
+          type: 2,
+          custom_id: CREATOR_TICKET_STAFF_MENU_CUSTOM_ID,
+          label: "Menu Staff",
+          style: 2,
+        },
+        {
+          type: 2,
+          custom_id: CREATOR_TICKET_CLAIM_CUSTOM_ID,
+          label: "Assumir ticket",
+          style: 3,
         },
       ],
     },
@@ -174,7 +261,7 @@ export function buildCreatorTicketWelcomeMessage(input: {
           "",
           "Para agilizar sua análise, envie abaixo:",
           "",
-          "1. Link do seu Instagram, TikTok ou rede principal",
+          "1. Link da sua rede principal",
           "2. Prints de postagens, stories, colabs ou métricas recentes",
           "3. Frequência de publicações",
           "4. Se já marcou o Coliseu RP na bio",
@@ -204,8 +291,122 @@ export function buildCreatorTicketWelcomeMessage(input: {
         },
       },
     ],
-    components: buildTicketCloseButtonComponent(),
+    components: buildTicketActionButtons(),
   };
+}
+
+export function buildCreatorTicketStaffMenuReply() {
+  return {
+    content: "Selecione uma ação da staff para este ticket.",
+    components: [
+      {
+        type: 1,
+        components: [
+          {
+            type: 3,
+            custom_id: CREATOR_TICKET_STAFF_ACTION_SELECT_CUSTOM_ID,
+            placeholder: "Selecione uma ação da staff",
+            min_values: 1,
+            max_values: 1,
+            options: [
+              {
+                label: "Alterar nome do canal",
+                value: CREATOR_TICKET_STAFF_RENAME_VALUE,
+                description: "Renomear o ticket com segurança",
+              },
+              {
+                label: "Notificar usuário no privado",
+                value: CREATOR_TICKET_STAFF_NOTIFY_VALUE,
+                description: "Enviar um aviso no privado do creator",
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+}
+
+export function buildCreatorTicketCloseModal(ticketId: string) {
+  return {
+    custom_id: `${CREATOR_TICKET_CLOSE_MODAL_PREFIX}${ticketId}`,
+    title: "Fechar ticket",
+    components: [
+      {
+        type: 1,
+        components: [
+          {
+            type: 4,
+            custom_id: CREATOR_TICKET_CLOSE_REASON_INPUT_ID,
+            label: "Motivo do fechamento",
+            style: 2,
+            placeholder: "Informe o motivo do fechamento do ticket.",
+            required: true,
+            max_length: 300,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+export function buildCreatorTicketRenameModal(ticketId: string) {
+  return {
+    custom_id: `${CREATOR_TICKET_RENAME_MODAL_PREFIX}${ticketId}`,
+    title: "Alterar nome do ticket",
+    components: [
+      {
+        type: 1,
+        components: [
+          {
+            type: 4,
+            custom_id: CREATOR_TICKET_RENAME_INPUT_ID,
+            label: "Novo nome do canal",
+            style: 1,
+            placeholder: "Ex: ticket-streamer-snow-metricas",
+            required: true,
+            max_length: 90,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+export function buildCreatorTicketNotifyModal(ticketId: string) {
+  return {
+    custom_id: `${CREATOR_TICKET_NOTIFY_MODAL_PREFIX}${ticketId}`,
+    title: "Notificar creator",
+    components: [
+      {
+        type: 1,
+        components: [
+          {
+            type: 4,
+            custom_id: CREATOR_TICKET_NOTIFY_INPUT_ID,
+            label: "Mensagem",
+            style: 2,
+            placeholder:
+              "Digite uma mensagem personalizada ou deixe em branco para usar a mensagem padrão.",
+            required: false,
+            max_length: 600,
+          },
+        ],
+      },
+    ],
+  };
+}
+
+export function parseTicketRecordIdFromCustomId(
+  customId: string,
+  prefix: string,
+) {
+  if (!customId.startsWith(prefix)) {
+    return null;
+  }
+
+  const ticketId = customId.slice(prefix.length).trim();
+  return ticketId.length > 0 ? ticketId : null;
 }
 
 export function buildExistingTicketMessage(channelId: string) {

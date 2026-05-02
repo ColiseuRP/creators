@@ -174,6 +174,9 @@ export interface CreatorTicket {
   ticket_type: CreatorTicketType | null;
   status: CreatorTicketStatus;
   created_at: string;
+  claimed_by: string | null;
+  claimed_by_name: string | null;
+  claimed_at: string | null;
   closed_at: string | null;
   closed_by: string | null;
   close_reason: string | null;
@@ -194,6 +197,7 @@ export interface DiscordBotLog {
   discord_user_id: string | null;
   discord_username: string | null;
   channel_id: string | null;
+  ticket_id?: string | null;
   ticket_type: CreatorTicketType | null;
   application_id?: string | null;
   action_by?: string | null;

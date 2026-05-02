@@ -2,9 +2,16 @@ import { GuildMember, PermissionFlagsBits } from "discord.js";
 
 import {
   buildLegacyTicketPanelMessage,
+  CREATOR_TICKET_CLAIM_CUSTOM_ID,
   CREATOR_TICKET_CLOSE_CUSTOM_ID,
+  CREATOR_TICKET_CLOSE_MODAL_PREFIX,
   CREATOR_TICKET_CREATE_CUSTOM_ID,
+  CREATOR_TICKET_NOTIFY_MODAL_PREFIX,
+  CREATOR_TICKET_RENAME_MODAL_PREFIX,
+  CREATOR_TICKET_STAFF_ACTION_SELECT_CUSTOM_ID,
+  CREATOR_TICKET_STAFF_MENU_CUSTOM_ID,
   CREATOR_TICKET_TYPE_SELECT_CUSTOM_ID,
+  parseTicketRecordIdFromCustomId,
 } from "../../shared/discord-ticketing";
 import {
   CREATOR_APPLICATION_MODAL_CUSTOM_ID,
@@ -22,8 +29,18 @@ import {
   resolveCreatorApplicationRejectModalId,
 } from "../interactions/creator-application";
 import { setupTicketsCommand } from "../commands/setup-tickets";
-import { handleCreatorTicketClose } from "../interactions/creator-ticket-close";
+import {
+  handleCreatorTicketClose,
+  handleCreatorTicketCloseModalSubmit,
+} from "../interactions/creator-ticket-close";
 import { handleCreatorTicketCreate } from "../interactions/creator-ticket-create";
+import {
+  handleCreatorTicketClaim,
+  handleCreatorTicketNotifyModalSubmit,
+  handleCreatorTicketRenameModalSubmit,
+  handleCreatorTicketStaffActionSelect,
+  handleCreatorTicketStaffMenu,
+} from "../interactions/creator-ticket-staff";
 import { publishCreatorTicketPanelFromBot } from "../services/panel-publisher";
 import type { BotContext } from "../types";
 
@@ -68,10 +85,44 @@ export function registerInteractionCreateEvent(context: BotContext) {
         await handleCreatorTicketCreate(context, interaction);
       }
 
+      if (interaction.customId === CREATOR_TICKET_STAFF_ACTION_SELECT_CUSTOM_ID) {
+        await handleCreatorTicketStaffActionSelect(context, interaction);
+      }
+
       return;
     }
 
     if (interaction.isModalSubmit()) {
+      const closeTicketId = parseTicketRecordIdFromCustomId(
+        interaction.customId,
+        CREATOR_TICKET_CLOSE_MODAL_PREFIX,
+      );
+
+      if (closeTicketId) {
+        await handleCreatorTicketCloseModalSubmit(context, interaction, closeTicketId);
+        return;
+      }
+
+      const renameTicketId = parseTicketRecordIdFromCustomId(
+        interaction.customId,
+        CREATOR_TICKET_RENAME_MODAL_PREFIX,
+      );
+
+      if (renameTicketId) {
+        await handleCreatorTicketRenameModalSubmit(context, interaction, renameTicketId);
+        return;
+      }
+
+      const notifyTicketId = parseTicketRecordIdFromCustomId(
+        interaction.customId,
+        CREATOR_TICKET_NOTIFY_MODAL_PREFIX,
+      );
+
+      if (notifyTicketId) {
+        await handleCreatorTicketNotifyModalSubmit(context, interaction, notifyTicketId);
+        return;
+      }
+
       if (
         interaction.customId === CREATOR_APPLICATION_MODAL_CUSTOM_ID ||
         isCreatorApplicationModalCustomId(interaction.customId)
@@ -84,6 +135,7 @@ export function registerInteractionCreateEvent(context: BotContext) {
 
       if (rejectModalId) {
         await handleCreatorApplicationRejectSubmit(context, interaction, rejectModalId);
+        return;
       }
 
       return;
@@ -122,6 +174,16 @@ export function registerInteractionCreateEvent(context: BotContext) {
 
     if (interaction.customId === CREATOR_TICKET_CLOSE_CUSTOM_ID) {
       await handleCreatorTicketClose(context, interaction);
+      return;
+    }
+
+    if (interaction.customId === CREATOR_TICKET_STAFF_MENU_CUSTOM_ID) {
+      await handleCreatorTicketStaffMenu(context, interaction);
+      return;
+    }
+
+    if (interaction.customId === CREATOR_TICKET_CLAIM_CUSTOM_ID) {
+      await handleCreatorTicketClaim(context, interaction);
     }
   });
 }

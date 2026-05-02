@@ -8,6 +8,7 @@ interface BotLogInput {
   discordUserId?: string | null;
   discordUsername?: string | null;
   channelId?: string | null;
+  ticketId?: string | null;
   ticketType?: CreatorTicketType | null;
   applicationId?: string | null;
   actionBy?: string | null;
@@ -23,6 +24,7 @@ export async function dispatchBotLog(context: BotContext, input: BotLogInput) {
       discordUserId: input.discordUserId ?? null,
       discordUsername: input.discordUsername ?? null,
       channelId: input.channelId ?? null,
+      ticketId: input.ticketId ?? null,
       ticketType: input.ticketType ?? null,
       applicationId: input.applicationId ?? null,
       actionBy: input.actionBy ?? null,

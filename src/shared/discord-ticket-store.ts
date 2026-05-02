@@ -31,6 +31,12 @@ interface CloseCreatorTicketInput {
   closeReason?: string | null;
 }
 
+interface ClaimCreatorTicketInput {
+  ticketId: string;
+  claimedBy: string;
+  claimedByName: string;
+}
+
 interface UpsertDiscordPanelInput {
   type: DiscordPanelType;
   channelId: string;
@@ -42,6 +48,7 @@ interface CreateDiscordBotLogInput {
   discordUserId?: string | null;
   discordUsername?: string | null;
   channelId?: string | null;
+  ticketId?: string | null;
   ticketType?: CreatorTicketType | null;
   applicationId?: string | null;
   actionBy?: string | null;
@@ -64,6 +71,9 @@ const memoryState: {
       ticket_type: "streamer",
       status: "open",
       created_at: "2026-04-29T15:00:00.000Z",
+      claimed_by: null,
+      claimed_by_name: null,
+      claimed_at: null,
       closed_at: null,
       closed_by: null,
       close_reason: null,
@@ -76,6 +86,9 @@ const memoryState: {
       ticket_type: "influencer",
       status: "open",
       created_at: "2026-04-28T17:45:00.000Z",
+      claimed_by: null,
+      claimed_by_name: null,
+      claimed_at: null,
       closed_at: null,
       closed_by: null,
       close_reason: null,
@@ -88,6 +101,9 @@ const memoryState: {
       ticket_type: "streamer",
       status: "closed",
       created_at: "2026-04-25T13:10:00.000Z",
+      claimed_by: "111111111111111111",
+      claimed_by_name: "staff.snow",
+      claimed_at: "2026-04-25T13:15:00.000Z",
       closed_at: "2026-04-25T14:00:00.000Z",
       closed_by: "111111111111111111",
       close_reason: "Atendimento finalizado pela equipe.",
@@ -110,6 +126,7 @@ const memoryState: {
       discord_user_id: null,
       discord_username: null,
       channel_id: "1447948746670477469",
+      ticket_id: null,
       ticket_type: null,
       application_id: null,
       action_by: null,
@@ -303,6 +320,28 @@ export async function findCreatorTicketByChannelId(client: DatabaseClient, chann
   return (data as CreatorTicket | null) ?? null;
 }
 
+export async function findCreatorTicketById(client: DatabaseClient, ticketId: string) {
+  if (!client) {
+    return memoryState.tickets.find((ticket) => ticket.id === ticketId) ?? null;
+  }
+
+  const { data, error } = await client
+    .from("creator_tickets")
+    .select("*")
+    .eq("id", ticketId)
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      return findCreatorTicketById(null, ticketId);
+    }
+
+    throw new Error(error.message);
+  }
+
+  return (data as CreatorTicket | null) ?? null;
+}
+
 export async function createCreatorTicketRecord(
   client: DatabaseClient,
   input: CreateCreatorTicketInput,
@@ -316,6 +355,9 @@ export async function createCreatorTicketRecord(
       ticket_type: input.ticketType,
       status: "open",
       created_at: getNowIso(),
+      claimed_by: null,
+      claimed_by_name: null,
+      claimed_at: null,
       closed_at: null,
       closed_by: null,
       close_reason: null,
@@ -361,6 +403,56 @@ export async function createCreatorTicketRecord(
   }
 
   return data as CreatorTicket;
+}
+
+export async function claimCreatorTicketRecord(
+  client: DatabaseClient,
+  input: ClaimCreatorTicketInput,
+) {
+  if (!client) {
+    const current = memoryState.tickets.find((ticket) => ticket.id === input.ticketId);
+
+    if (!current) {
+      return null;
+    }
+
+    current.claimed_by = input.claimedBy;
+    current.claimed_by_name = input.claimedByName;
+    current.claimed_at = getNowIso();
+
+    return current;
+  }
+
+  const { data, error } = await client
+    .from("creator_tickets")
+    .update({
+      claimed_by: input.claimedBy,
+      claimed_by_name: input.claimedByName,
+      claimed_at: getNowIso(),
+    })
+    .eq("id", input.ticketId)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    if (isMissingTableError(error)) {
+      return claimCreatorTicketRecord(null, input);
+    }
+
+    if (
+      isMissingColumnError(error, "claimed_by") ||
+      isMissingColumnError(error, "claimed_by_name") ||
+      isMissingColumnError(error, "claimed_at")
+    ) {
+      throw new Error(
+        "Os campos de atendimento da staff ainda não foram aplicados no Supabase. Rode a migration mais recente dos tickets.",
+      );
+    }
+
+    throw new Error(error.message);
+  }
+
+  return (data as CreatorTicket | null) ?? null;
 }
 
 export async function closeCreatorTicketRecord(
@@ -521,6 +613,7 @@ export async function createDiscordBotLogRecord(
       discord_user_id: input.discordUserId ?? null,
       discord_username: input.discordUsername ?? null,
       channel_id: input.channelId ?? null,
+      ticket_id: input.ticketId ?? null,
       ticket_type: input.ticketType ?? null,
       application_id: input.applicationId ?? null,
       action_by: input.actionBy ?? null,
@@ -539,6 +632,7 @@ export async function createDiscordBotLogRecord(
     discord_user_id: input.discordUserId ?? null,
     discord_username: input.discordUsername ?? null,
     channel_id: input.channelId ?? null,
+    ticket_id: input.ticketId ?? null,
     ticket_type: input.ticketType ?? null,
     application_id: input.applicationId ?? null,
     action_by: input.actionBy ?? null,
@@ -557,6 +651,8 @@ export async function createDiscordBotLogRecord(
     error &&
     (isMissingColumnError(error, "discord_username") ||
       isMissingColumnError(error, "ticket_type") ||
+      isMissingColumnError(error, "application_id") ||
+      isMissingColumnError(error, "ticket_id") ||
       isMissingColumnError(error, "application_id") ||
       isMissingColumnError(error, "action_by"))
   ) {
