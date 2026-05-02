@@ -8,6 +8,8 @@ export function registerReadyEvent(context: BotContext) {
     logBotInfo("Auto cargo Cidadão ativado.");
     logBotInfo("Sistema de tickets carregado.");
     logBotInfo("Painel de tickets pronto para publicação.");
+    logBotInfo("Formulário de inscrição carregado.");
+    logBotInfo("Painel do formulário pronto para publicação.");
 
     if (!context.supabase) {
       logBotWarn(

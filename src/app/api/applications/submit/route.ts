@@ -1,6 +1,6 @@
 import { errorResponse, okResponse } from "@/lib/api";
+import { submitCreatorApplication } from "@/lib/creator-application-workflows";
 import { creatorApplicationSubmissionSchema } from "@/lib/validation";
-import { submitCreatorApplication } from "@/lib/workflows";
 
 export async function POST(request: Request) {
   try {

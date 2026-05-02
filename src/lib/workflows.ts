@@ -60,6 +60,8 @@ interface ManualDiscordMessageInput {
     | "influencer_requirements"
     | "streamer_requirements"
     | "ticket"
+    | "creator_form"
+    | "creator_form_submissions"
     | "punishments"
     | "notices"
     | "logos"

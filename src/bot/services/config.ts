@@ -6,8 +6,11 @@ const REQUIRED_ENV_KEYS = [
   "DISCORD_GUILD_ID",
   "DISCORD_CITIZEN_ROLE_ID",
   "DISCORD_TICKET_CHANNEL_ID",
+  "DISCORD_CREATOR_FORM_CHANNEL_ID",
+  "DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID",
   "DISCORD_CREATORS_CATEGORY_ID",
   "DISCORD_NOTICES_CHANNEL_ID",
+  "DISCORD_APPROVED_CREATOR_ROLE_ID",
   "DISCORD_RESPONSAVEL_STAFF_ROLE_ID",
 ] as const;
 
@@ -59,9 +62,14 @@ export function loadBotConfig(): BotConfig {
     guildId: getEnvValue("DISCORD_GUILD_ID")!,
     citizenRoleId: getEnvValue("DISCORD_CITIZEN_ROLE_ID")!,
     ticketChannelId: getEnvValue("DISCORD_TICKET_CHANNEL_ID")!,
+    creatorFormChannelId: getEnvValue("DISCORD_CREATOR_FORM_CHANNEL_ID")!,
+    creatorFormSubmissionsChannelId: getEnvValue(
+      "DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID",
+    )!,
     creatorsCategoryId: getEnvValue("DISCORD_CREATORS_CATEGORY_ID")!,
     noticesChannelId,
     generalCreatorsChannelId,
+    approvedCreatorRoleId: getEnvValue("DISCORD_APPROVED_CREATOR_ROLE_ID")!,
     responsavelStaffRoleId,
     responsavelCreatorsRoleId,
     staffRoleIds: buildStaffRoleIds({

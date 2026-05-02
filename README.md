@@ -46,6 +46,9 @@ DISCORD_RULES_CHANNEL_ID=
 DISCORD_INFLUENCER_REQUIREMENTS_CHANNEL_ID=
 DISCORD_STREAMER_REQUIREMENTS_CHANNEL_ID=
 DISCORD_TICKET_CHANNEL_ID=1447948746670477469
+DISCORD_CREATOR_FORM_CHANNEL_ID=1499941154966212688
+DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID=1499941324143460466
+DISCORD_APPROVED_CREATOR_ROLE_ID=1447948745718239475
 DISCORD_PUNISHMENTS_CHANNEL_ID=
 DISCORD_NOTICES_CHANNEL_ID=1447948746985046029
 DISCORD_LOGOS_CHANNEL_ID=
@@ -60,6 +63,9 @@ Regras importantes:
 - `DISCORD_RESPONSAVEL_STAFF_ROLE_ID` define o cargo principal que será marcado nos tickets.
 - `DISCORD_RESPONSAVEL_CREATORS_ROLE_ID` é opcional e pode liberar outro cargo oficial da equipe.
 - `DISCORD_STAFF_ROLE_IDS` aceita múltiplos IDs separados por vírgula.
+- `DISCORD_CREATOR_FORM_CHANNEL_ID` define o canal onde o bot publica o painel oficial do formulário.
+- `DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID` define o canal onde a equipe recebe as inscrições vindas do Discord.
+- `DISCORD_APPROVED_CREATOR_ROLE_ID` é o cargo entregue automaticamente quando a inscrição é aprovada.
 - `DISCORD_ARCHIVED_TICKETS_CATEGORY_ID` é opcional. Se não estiver preenchida, tickets fechados são removidos em vez de arquivados.
 - Se `DISCORD_GENERAL_CREATORS_CHANNEL_ID` não estiver configurado, o sistema usa `DISCORD_NOTICES_CHANNEL_ID` como fallback de compatibilidade.
 
@@ -80,6 +86,7 @@ No `SQL Editor` do Supabase, execute os arquivos nesta ordem:
 4. `supabase/migrations/202605011130_discord_bot_tickets.sql`
 5. `supabase/migrations/202605011340_bootstrap_discord_bot_tables.sql`
 6. `supabase/migrations/202605011430_ticket_type_support.sql`
+7. `supabase/migrations/202605011530_creator_application_discord_flow.sql`
 
 As migrations cobrem:
 
@@ -102,6 +109,8 @@ As migrations cobrem:
 Se a produção estiver mostrando erros como `Could not find the table 'public.creator_tickets' in the schema cache`, aplique também `202605011340_bootstrap_discord_bot_tables.sql` no Supabase para criar as tabelas ausentes e atualizar a estrutura esperada pelo site.
 
 Para liberar o filtro por tipo de atendimento, a gravação de `ticket_type` e os campos novos de log do bot, aplique também `202605011430_ticket_type_support.sql`.
+
+Para liberar a aprovação e negação de inscrições pelo site e pelo Discord, além do formulário oficial do bot, aplique também `202605011530_creator_application_discord_flow.sql`.
 
 Também cria:
 
@@ -284,6 +293,32 @@ O painel administrativo também já possui o botão:
 
 - `Publicar painel de tickets`
 
+### 4. Formulário oficial de inscrições
+
+O bot também pode publicar o painel do formulário no canal `DISCORD_CREATOR_FORM_CHANNEL_ID`.
+
+Fluxo:
+
+- o painel exibe o botão `Participar Creators`
+- ao clicar, o bot abre um modal com os campos principais da inscrição
+- a resposta é salva em `creator_applications` com `source = 'discord'`
+- o bot envia um embed para `DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID`
+- a equipe pode aprovar ou negar diretamente pelo Discord
+- na aprovação, o bot tenta enviar DM e adicionar `DISCORD_APPROVED_CREATOR_ROLE_ID`
+- na negação, o bot pede um motivo e envia DM quando possível
+
+Rota segura disponível:
+
+- `POST /api/discord/setup-creator-form`
+
+No site, a página `Fila de inscrições` também permite:
+
+- aprovar inscrições vindas do site
+- aprovar inscrições vindas do Discord
+- negar com motivo obrigatório
+- visualizar a origem `Site` ou `Discord`
+- publicar o painel do formulário sem sair da central
+
 ## Integração com o site
 
 Na Central de Creators e em Configurações do Discord, o painel já mostra:
@@ -296,6 +331,15 @@ Na Central de Creators e em Configurações do Discord, o painel já mostra:
 - status do painel publicado
 - configuração dos canais do Discord
 
+Na fila de inscrições, o site agora mostra:
+
+- origem da inscrição
+- status da análise
+- responsável que analisou
+- data da análise
+- motivo da negação, quando existir
+- ações de `Aprovar` e `Negar`
+
 ## Permissões necessárias do bot no Discord
 
 O bot precisa destas permissões:
@@ -305,6 +349,7 @@ O bot precisa destas permissões:
 - Read Message History
 - Manage Channels
 - Manage Roles
+- Manage Messages
 - Manage Permissions
 - Embed Links
 - Attach Files
@@ -315,9 +360,13 @@ Também garanta:
 - o cargo do bot acima do cargo Cidadão
 - o cargo do bot acima de qualquer cargo que ele precise gerenciar
 - o cargo do bot acima do `DISCORD_RESPONSAVEL_STAFF_ROLE_ID`
+- o cargo do bot acima do `DISCORD_APPROVED_CREATOR_ROLE_ID`
 - permissão para criar canais na categoria dos creators
 - permissão para ver e enviar mensagens no canal de tickets
 - permissão para ver e enviar mensagens no canal de avisos
+- permissão para ver e enviar mensagens no canal do formulário
+- permissão para ver e enviar mensagens no canal de formulários enviados
+- o bot pode falhar ao mandar DM se o usuário bloquear mensagens privadas do servidor
 
 ## Discord Developer Portal
 

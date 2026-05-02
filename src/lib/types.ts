@@ -7,7 +7,11 @@ export type NoticeTargetType = "individual" | "general" | "category";
 export type DiscordLogStatus = "pending" | "sent" | "failed" | "skipped";
 export type CreatorTicketType = "streamer" | "influencer";
 export type CreatorTicketStatus = "open" | "closed" | "archived";
-export type DiscordPanelType = "creator_ticket_panel";
+export type CreatorApplicationSource = "site" | "discord";
+export type CreatorApplicationStatus = "pending" | "approved" | "rejected";
+export type DiscordPanelType =
+  | "creator_ticket_panel"
+  | "creator_application_form_panel";
 
 export interface Profile {
   id: string;
@@ -53,7 +57,7 @@ export interface CreatorApplication {
   discord_name: string;
   discord_id: string;
   city_name: string;
-  age: number;
+  age: number | null;
   category: string;
   twitch_url: string | null;
   tiktok_url: string | null;
@@ -63,10 +67,16 @@ export interface CreatorApplication {
   reason: string;
   content_links: string | null;
   observations: string | null;
-  status: "pending" | "approved" | "rejected";
+  status: CreatorApplicationStatus;
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
+  reviewed_by_text?: string | null;
+  reviewed_by_name?: string | null;
+  rejection_reason?: string | null;
+  source?: CreatorApplicationSource | null;
+  review_channel_id?: string | null;
+  review_message_id?: string | null;
 }
 
 export interface MetricAttachment {
@@ -185,6 +195,8 @@ export interface DiscordBotLog {
   discord_username: string | null;
   channel_id: string | null;
   ticket_type: CreatorTicketType | null;
+  application_id?: string | null;
+  action_by?: string | null;
   status: "success" | "failed" | "info";
   message: string;
   error_message: string | null;

@@ -65,6 +65,8 @@ export const discordMessageSchema = z.object({
       "influencer_requirements",
       "streamer_requirements",
       "ticket",
+      "creator_form",
+      "creator_form_submissions",
       "punishments",
       "notices",
       "logos",
@@ -90,4 +92,12 @@ export const creatorApplicationSubmissionSchema = z.object({
   reason: z.string().trim().min(10, "Conte melhor por que você quer representar o Coliseu RP."),
   contentLinks: z.string().trim().optional().default(""),
   observations: z.string().trim().optional().default(""),
+});
+
+export const creatorApplicationRejectSchema = z.object({
+  rejectionReason: z
+    .string()
+    .trim()
+    .min(5, "Informe o motivo da negação.")
+    .max(1000, "O motivo da negação está muito longo."),
 });

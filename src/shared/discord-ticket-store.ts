@@ -43,6 +43,8 @@ interface CreateDiscordBotLogInput {
   discordUsername?: string | null;
   channelId?: string | null;
   ticketType?: CreatorTicketType | null;
+  applicationId?: string | null;
+  actionBy?: string | null;
   status: DiscordBotLog["status"];
   message: string;
   errorMessage?: string | null;
@@ -109,6 +111,8 @@ const memoryState: {
       discord_username: null,
       channel_id: "1447948746670477469",
       ticket_type: null,
+      application_id: null,
+      action_by: null,
       status: "success",
       message: "Painel de tickets publicado com sucesso.",
       error_message: null,
@@ -518,6 +522,8 @@ export async function createDiscordBotLogRecord(
       discord_username: input.discordUsername ?? null,
       channel_id: input.channelId ?? null,
       ticket_type: input.ticketType ?? null,
+      application_id: input.applicationId ?? null,
+      action_by: input.actionBy ?? null,
       status: input.status,
       message: input.message,
       error_message: input.errorMessage ?? null,
@@ -534,6 +540,8 @@ export async function createDiscordBotLogRecord(
     discord_username: input.discordUsername ?? null,
     channel_id: input.channelId ?? null,
     ticket_type: input.ticketType ?? null,
+    application_id: input.applicationId ?? null,
+    action_by: input.actionBy ?? null,
     status: input.status,
     message: input.message,
     error_message: input.errorMessage ?? null,
@@ -548,7 +556,9 @@ export async function createDiscordBotLogRecord(
   if (
     error &&
     (isMissingColumnError(error, "discord_username") ||
-      isMissingColumnError(error, "ticket_type"))
+      isMissingColumnError(error, "ticket_type") ||
+      isMissingColumnError(error, "application_id") ||
+      isMissingColumnError(error, "action_by"))
   ) {
     ({ data, error } = await client
       .from("discord_bot_logs")

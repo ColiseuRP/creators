@@ -42,6 +42,9 @@ export default async function DiscordSettingsPage() {
   const isDiscordBotTokenConfigured = Boolean(getServerEnvValue("DISCORD_BOT_TOKEN"));
   const isDiscordGuildConfigured = Boolean(getServerEnvValue("DISCORD_GUILD_ID"));
   const isDiscordCitizenRoleConfigured = Boolean(getServerEnvValue("DISCORD_CITIZEN_ROLE_ID"));
+  const isDiscordApprovedCreatorRoleConfigured = Boolean(
+    getServerEnvValue("DISCORD_APPROVED_CREATOR_ROLE_ID"),
+  );
   const isDiscordCreatorsCategoryConfigured = Boolean(
     getServerEnvValue("DISCORD_CREATORS_CATEGORY_ID"),
   );
@@ -50,6 +53,12 @@ export default async function DiscordSettingsPage() {
     (channel) => channel.purpose === "notices",
   );
   const ticketChannel = channelStatuses.find((channel) => channel.purpose === "ticket");
+  const creatorFormChannel = channelStatuses.find(
+    (channel) => channel.purpose === "creator_form",
+  );
+  const creatorFormSubmissionsChannel = channelStatuses.find(
+    (channel) => channel.purpose === "creator_form_submissions",
+  );
   const missingRequiredChannels = channelStatuses.filter(
     (channel) => channel.required && !channel.configured,
   );
@@ -58,19 +67,28 @@ export default async function DiscordSettingsPage() {
     isDiscordBotTokenConfigured &&
     isDiscordGuildConfigured &&
     isDiscordCitizenRoleConfigured &&
+    isDiscordApprovedCreatorRoleConfigured &&
     isDiscordCreatorsCategoryConfigured &&
     Boolean(primaryNoticeChannel?.configured) &&
-    Boolean(ticketChannel?.configured);
+    Boolean(ticketChannel?.configured) &&
+    Boolean(creatorFormChannel?.configured) &&
+    Boolean(creatorFormSubmissionsChannel?.configured);
 
   const checks: Array<[string, boolean]> = [
     ["Chave interna da equipe", isServerServiceRoleConfigured()],
     ["Credencial do bot", isDiscordBotTokenConfigured],
     ["Servidor do Coliseu", isDiscordGuildConfigured],
     ["Cargo Cidadão", isDiscordCitizenRoleConfigured],
+    ["Cargo creator aprovado", isDiscordApprovedCreatorRoleConfigured],
     ["Categoria dos creators", isDiscordCreatorsCategoryConfigured],
     ["Cargos da staff de tickets", hasStaffRoleIds],
     ["Canal principal de avisos", Boolean(primaryNoticeChannel?.configured)],
     ["Canal de tickets", Boolean(ticketChannel?.configured)],
+    ["Canal do formulário", Boolean(creatorFormChannel?.configured)],
+    [
+      "Canal de formulários enviados",
+      Boolean(creatorFormSubmissionsChannel?.configured),
+    ],
   ];
 
   return (

@@ -22,6 +22,7 @@ import type {
   MetricSubmission,
   SessionContext,
 } from "@/lib/types";
+import { listCreatorApplications } from "@/shared/creator-application-store";
 import { getCreatorTicketSnapshot as getDiscordTicketSnapshotFromStore } from "@/shared/discord-ticket-store";
 
 type ServerSupabaseClient = NonNullable<
@@ -259,12 +260,37 @@ export async function getApplications(actor: SessionContext): Promise<CreatorApp
     return [];
   }
 
-  const { data } = await supabase
-    .from("creator_applications")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const applications = await listCreatorApplications(supabase, {
+      fallbackToMemory: false,
+    });
+    const reviewedProfileIds = applications
+      .map((application) => application.reviewed_by)
+      .filter((value): value is string => Boolean(value));
 
-  return (data ?? []) as CreatorApplication[];
+    if (reviewedProfileIds.length === 0) {
+      return applications;
+    }
+
+    const { data: profileRows } = await supabase
+      .from("profiles")
+      .select("id, name")
+      .in("id", reviewedProfileIds);
+
+    const profileNameMap = new Map(
+      (profileRows ?? []).map((profile) => [profile.id as string, profile.name as string]),
+    );
+
+    return applications.map((application) => ({
+      ...application,
+      reviewed_by_name:
+        application.reviewed_by_name ??
+        (application.reviewed_by ? profileNameMap.get(application.reviewed_by) ?? null : null),
+    }));
+  } catch (error) {
+    console.error("[applications] Falha ao carregar inscrições.", error);
+    return [];
+  }
 }
 
 export async function getNotices(actor: SessionContext): Promise<CreatorNotice[]> {

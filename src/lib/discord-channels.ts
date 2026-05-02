@@ -8,6 +8,8 @@ export type DiscordChannelPurpose =
   | "influencer_requirements"
   | "streamer_requirements"
   | "ticket"
+  | "creator_form"
+  | "creator_form_submissions"
   | "punishments"
   | "notices"
   | "logos"
@@ -64,6 +66,12 @@ export function getDiscordChannelIdForPurpose(
       );
     case "ticket":
       return normalizeChannelId(getServerEnvValue("DISCORD_TICKET_CHANNEL_ID"));
+    case "creator_form":
+      return normalizeChannelId(getServerEnvValue("DISCORD_CREATOR_FORM_CHANNEL_ID"));
+    case "creator_form_submissions":
+      return normalizeChannelId(
+        getServerEnvValue("DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID"),
+      );
     case "punishments":
       return normalizeChannelId(getServerEnvValue("DISCORD_PUNISHMENTS_CHANNEL_ID"));
     case "notices":
@@ -87,6 +95,10 @@ export function getDiscordMissingChannelMessage(purpose: DiscordChannelPurpose) 
       return "Canal de requisitos dos streamers não configurado no Discord.";
     case "ticket":
       return "Canal de tickets do Discord não configurado.";
+    case "creator_form":
+      return "Canal do formulário de creators no Discord não configurado.";
+    case "creator_form_submissions":
+      return "Canal de formulários enviados no Discord não configurado.";
     case "punishments":
       return "Canal de punições do Discord não configurado.";
     case "notices":
@@ -114,6 +126,10 @@ export function getDiscordChannelPurposeForMessageType(messageType: string) {
     case "ticket_guidance":
     case "support_ticket":
       return "ticket" as const;
+    case "creator_application_form":
+      return "creator_form" as const;
+    case "creator_application_review":
+      return "creator_form_submissions" as const;
     case "punishment_notice":
     case "punishment_record":
     case "creator_warning":
@@ -186,6 +202,30 @@ export function getDiscordChannelStatusItems(settings?: DiscordSettings | null) 
       configured: Boolean(getDiscordChannelIdForPurpose("ticket", settings)),
       required: true,
       source: getDiscordChannelIdForPurpose("ticket", settings) ? "env" : "missing",
+    },
+    {
+      purpose: "creator_form",
+      label: "Canal do formulário",
+      description: "Painel oficial para abrir a inscrição dos Creators Coliseu.",
+      channelId: getDiscordChannelIdForPurpose("creator_form", settings),
+      configured: Boolean(getDiscordChannelIdForPurpose("creator_form", settings)),
+      required: true,
+      source: getDiscordChannelIdForPurpose("creator_form", settings)
+        ? "env"
+        : "missing",
+    },
+    {
+      purpose: "creator_form_submissions",
+      label: "Canal de formulários",
+      description: "Fila do Discord onde a equipe analisa inscrições enviadas pelo bot.",
+      channelId: getDiscordChannelIdForPurpose("creator_form_submissions", settings),
+      configured: Boolean(
+        getDiscordChannelIdForPurpose("creator_form_submissions", settings),
+      ),
+      required: true,
+      source: getDiscordChannelIdForPurpose("creator_form_submissions", settings)
+        ? "env"
+        : "missing",
     },
     {
       purpose: "punishments",

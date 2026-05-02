@@ -6,9 +6,12 @@ export interface BotConfig {
   guildId: string;
   citizenRoleId: string;
   ticketChannelId: string;
+  creatorFormChannelId: string;
+  creatorFormSubmissionsChannelId: string;
   creatorsCategoryId: string;
   noticesChannelId: string;
   generalCreatorsChannelId: string;
+  approvedCreatorRoleId: string;
   responsavelStaffRoleId: string;
   responsavelCreatorsRoleId: string | null;
   staffRoleIds: string[];
