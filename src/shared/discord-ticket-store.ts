@@ -3,6 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   CreatorTicket,
   CreatorTicketStatus,
+  CreatorTicketType,
   DiscordBotLog,
   DiscordPanel,
   DiscordPanelType,
@@ -11,10 +12,16 @@ import type {
 
 type DatabaseClient = SupabaseClient | null;
 
+interface StoreReadOptions {
+  fallbackToMemory?: boolean;
+  ticketType?: CreatorTicketType | null;
+}
+
 interface CreateCreatorTicketInput {
   discordUserId: string;
   discordUsername: string;
   channelId: string;
+  ticketType: CreatorTicketType;
 }
 
 interface CloseCreatorTicketInput {
@@ -33,7 +40,9 @@ interface UpsertDiscordPanelInput {
 interface CreateDiscordBotLogInput {
   type: string;
   discordUserId?: string | null;
+  discordUsername?: string | null;
   channelId?: string | null;
+  ticketType?: CreatorTicketType | null;
   status: DiscordBotLog["status"];
   message: string;
   errorMessage?: string | null;
@@ -50,6 +59,7 @@ const memoryState: {
       discord_user_id: "333333333333333333",
       discord_username: "luna.live",
       channel_id: "987654321000000010",
+      ticket_type: "streamer",
       status: "open",
       created_at: "2026-04-29T15:00:00.000Z",
       closed_at: null,
@@ -57,10 +67,23 @@ const memoryState: {
       close_reason: null,
     },
     {
+      id: "mock-ticket-open-2",
+      discord_user_id: "444444444444444444",
+      discord_username: "isa.influencia",
+      channel_id: "987654321000000012",
+      ticket_type: "influencer",
+      status: "open",
+      created_at: "2026-04-28T17:45:00.000Z",
+      closed_at: null,
+      closed_by: null,
+      close_reason: null,
+    },
+    {
       id: "mock-ticket-closed-1",
-      discord_user_id: "222222222222222222",
-      discord_username: "diego.creators",
+      discord_user_id: "555555555555555555",
+      discord_username: "pedroshorts",
       channel_id: "987654321000000011",
+      ticket_type: "streamer",
       status: "closed",
       created_at: "2026-04-25T13:10:00.000Z",
       closed_at: "2026-04-25T14:00:00.000Z",
@@ -68,16 +91,72 @@ const memoryState: {
       close_reason: "Atendimento finalizado pela equipe.",
     },
   ],
-  panels: [],
-  logs: [],
+  panels: [
+    {
+      id: "mock-panel-1",
+      type: "creator_ticket_panel",
+      channel_id: "1447948746670477469",
+      message_id: "1448000000000000001",
+      created_at: "2026-04-28T12:00:00.000Z",
+      updated_at: "2026-04-29T08:30:00.000Z",
+    },
+  ],
+  logs: [
+    {
+      id: "mock-bot-log-1",
+      type: "ticket_panel_published",
+      discord_user_id: null,
+      discord_username: null,
+      channel_id: "1447948746670477469",
+      ticket_type: null,
+      status: "success",
+      message: "Painel de tickets publicado com sucesso.",
+      error_message: null,
+      created_at: "2026-04-29T08:30:00.000Z",
+    },
+  ],
 };
 
-function isMissingTableError(error: { code?: string | null; message?: string | null } | null) {
+function isMissingTableError(
+  error: {
+    code?: string | null;
+    message?: string | null;
+    details?: string | null;
+    hint?: string | null;
+  } | null,
+) {
   return (
     error?.code === "42P01" ||
+    error?.code === "PGRST205" ||
     error?.message?.includes("relation") ||
+    error?.message?.includes("Could not find the table") ||
+    error?.message?.includes("schema cache") ||
     error?.message?.includes("does not exist") ||
+    error?.details?.includes("schema cache") ||
+    error?.hint?.includes("schema cache") ||
     false
+  );
+}
+
+function isMissingColumnError(
+  error: {
+    code?: string | null;
+    message?: string | null;
+    details?: string | null;
+    hint?: string | null;
+  } | null,
+  columnName: string,
+) {
+  const content = [error?.message, error?.details, error?.hint]
+    .filter(Boolean)
+    .join(" | ")
+    .toLowerCase();
+
+  return (
+    error?.code === "42703" ||
+    error?.code === "PGRST204" ||
+    (content.includes(columnName.toLowerCase()) &&
+      (content.includes("column") || content.includes("schema cache")))
   );
 }
 
@@ -89,12 +168,37 @@ function createMemoryId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export async function listCreatorTickets(client: DatabaseClient, limit?: number) {
+function filterTicketsByType(
+  tickets: CreatorTicket[],
+  ticketType: CreatorTicketType | null | undefined,
+) {
+  if (!ticketType) {
+    return tickets;
+  }
+
+  return tickets.filter((ticket) => ticket.ticket_type === ticketType);
+}
+
+function sortTicketsByCreatedAt(tickets: CreatorTicket[]) {
+  return [...tickets].sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+function applyTicketLimit(tickets: CreatorTicket[], limit?: number) {
+  return typeof limit === "number" ? tickets.slice(0, limit) : tickets;
+}
+
+export async function listCreatorTickets(
+  client: DatabaseClient,
+  limit?: number,
+  options?: StoreReadOptions,
+) {
+  const fallbackToMemory = options?.fallbackToMemory ?? true;
+
   if (!client) {
-    const tickets = [...memoryState.tickets].sort((a, b) =>
-      b.created_at.localeCompare(a.created_at),
+    return applyTicketLimit(
+      filterTicketsByType(sortTicketsByCreatedAt(memoryState.tickets), options?.ticketType),
+      limit,
     );
-    return typeof limit === "number" ? tickets.slice(0, limit) : tickets;
   }
 
   let query = client
@@ -102,7 +206,7 @@ export async function listCreatorTickets(client: DatabaseClient, limit?: number)
     .select("*")
     .order("created_at", { ascending: false });
 
-  if (typeof limit === "number") {
+  if (typeof limit === "number" && !options?.ticketType) {
     query = query.limit(limit);
   }
 
@@ -110,18 +214,28 @@ export async function listCreatorTickets(client: DatabaseClient, limit?: number)
 
   if (error) {
     if (isMissingTableError(error)) {
-      return listCreatorTickets(null, limit);
+      if (fallbackToMemory) {
+        return listCreatorTickets(null, limit, options);
+      }
+
+      throw new Error(error.message);
     }
 
     throw new Error(error.message);
   }
 
-  return (data ?? []) as CreatorTicket[];
+  return applyTicketLimit(
+    filterTicketsByType((data ?? []) as CreatorTicket[], options?.ticketType),
+    limit,
+  );
 }
 
-export async function getCreatorTicketSnapshot(client: DatabaseClient): Promise<DiscordTicketSnapshot> {
-  const tickets = await listCreatorTickets(client);
-  const panel = await getDiscordPanelByType(client, "creator_ticket_panel");
+export async function getCreatorTicketSnapshot(
+  client: DatabaseClient,
+  options?: StoreReadOptions,
+): Promise<DiscordTicketSnapshot> {
+  const tickets = await listCreatorTickets(client, undefined, options);
+  const panel = await getDiscordPanelByType(client, "creator_ticket_panel", options);
 
   return {
     openCount: tickets.filter((ticket) => ticket.status === "open").length,
@@ -195,6 +309,7 @@ export async function createCreatorTicketRecord(
       discord_user_id: input.discordUserId,
       discord_username: input.discordUsername,
       channel_id: input.channelId,
+      ticket_type: input.ticketType,
       status: "open",
       created_at: getNowIso(),
       closed_at: null,
@@ -206,16 +321,32 @@ export async function createCreatorTicketRecord(
     return ticket;
   }
 
-  const { data, error } = await client
+  const insertPayload = {
+    discord_user_id: input.discordUserId,
+    discord_username: input.discordUsername,
+    channel_id: input.channelId,
+    ticket_type: input.ticketType,
+    status: "open",
+  };
+
+  let { data, error } = await client
     .from("creator_tickets")
-    .insert({
-      discord_user_id: input.discordUserId,
-      discord_username: input.discordUsername,
-      channel_id: input.channelId,
-      status: "open",
-    })
+    .insert(insertPayload)
     .select("*")
     .single();
+
+  if (error && isMissingColumnError(error, "ticket_type")) {
+    ({ data, error } = await client
+      .from("creator_tickets")
+      .insert({
+        discord_user_id: input.discordUserId,
+        discord_username: input.discordUsername,
+        channel_id: input.channelId,
+        status: "open",
+      })
+      .select("*")
+      .single());
+  }
 
   if (error) {
     if (isMissingTableError(error)) {
@@ -273,7 +404,10 @@ export async function closeCreatorTicketRecord(
 export async function getDiscordPanelByType(
   client: DatabaseClient,
   type: DiscordPanelType,
+  options?: StoreReadOptions,
 ) {
+  const fallbackToMemory = options?.fallbackToMemory ?? true;
+
   if (!client) {
     return memoryState.panels.find((panel) => panel.type === type) ?? null;
   }
@@ -286,7 +420,11 @@ export async function getDiscordPanelByType(
 
   if (error) {
     if (isMissingTableError(error)) {
-      return getDiscordPanelByType(null, type);
+      if (fallbackToMemory) {
+        return getDiscordPanelByType(null, type, options);
+      }
+
+      throw new Error(error.message);
     }
 
     throw new Error(error.message);
@@ -377,7 +515,9 @@ export async function createDiscordBotLogRecord(
       id: createMemoryId("bot-log"),
       type: input.type,
       discord_user_id: input.discordUserId ?? null,
+      discord_username: input.discordUsername ?? null,
       channel_id: input.channelId ?? null,
+      ticket_type: input.ticketType ?? null,
       status: input.status,
       message: input.message,
       error_message: input.errorMessage ?? null,
@@ -388,18 +528,41 @@ export async function createDiscordBotLogRecord(
     return log;
   }
 
-  const { data, error } = await client
+  const insertPayload = {
+    type: input.type,
+    discord_user_id: input.discordUserId ?? null,
+    discord_username: input.discordUsername ?? null,
+    channel_id: input.channelId ?? null,
+    ticket_type: input.ticketType ?? null,
+    status: input.status,
+    message: input.message,
+    error_message: input.errorMessage ?? null,
+  };
+
+  let { data, error } = await client
     .from("discord_bot_logs")
-    .insert({
-      type: input.type,
-      discord_user_id: input.discordUserId ?? null,
-      channel_id: input.channelId ?? null,
-      status: input.status,
-      message: input.message,
-      error_message: input.errorMessage ?? null,
-    })
+    .insert(insertPayload)
     .select("*")
     .single();
+
+  if (
+    error &&
+    (isMissingColumnError(error, "discord_username") ||
+      isMissingColumnError(error, "ticket_type"))
+  ) {
+    ({ data, error } = await client
+      .from("discord_bot_logs")
+      .insert({
+        type: input.type,
+        discord_user_id: input.discordUserId ?? null,
+        channel_id: input.channelId ?? null,
+        status: input.status,
+        message: input.message,
+        error_message: input.errorMessage ?? null,
+      })
+      .select("*")
+      .single());
+  }
 
   if (error) {
     if (isMissingTableError(error)) {
@@ -410,26 +573,4 @@ export async function createDiscordBotLogRecord(
   }
 
   return data as DiscordBotLog;
-}
-
-export async function listDiscordBotLogs(client: DatabaseClient, limit = 10) {
-  if (!client) {
-    return memoryState.logs.slice(0, limit);
-  }
-
-  const { data, error } = await client
-    .from("discord_bot_logs")
-    .select("*")
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) {
-    if (isMissingTableError(error)) {
-      return listDiscordBotLogs(null, limit);
-    }
-
-    throw new Error(error.message);
-  }
-
-  return (data ?? []) as DiscordBotLog[];
 }

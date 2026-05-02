@@ -2,12 +2,16 @@ import type { AppRole, SessionContext } from "@/lib/types";
 
 export const STAFF_ROLES: AppRole[] = ["admin_general", "responsavel_creators"];
 
+export const ROLE_LABELS: Record<AppRole, string> = {
+  admin_general: "Administrador Geral",
+  responsavel_creators: "Responsável Creators",
+  creator: "Creator",
+};
+
 export function normalizeAppRole(value: string | null | undefined): AppRole | null {
   switch (value) {
-    case "admin":
     case "admin_general":
       return "admin_general";
-    case "responsible_creator":
     case "responsavel_creators":
       return "responsavel_creators";
     case "creator":
@@ -15,6 +19,10 @@ export function normalizeAppRole(value: string | null | undefined): AppRole | nu
     default:
       return null;
   }
+}
+
+export function getRoleLabel(role: AppRole) {
+  return ROLE_LABELS[role];
 }
 
 export function isStaffRole(role: AppRole | null | undefined) {

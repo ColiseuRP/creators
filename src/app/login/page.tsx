@@ -6,14 +6,39 @@ import { switchDemoRoleAction } from "@/app/actions/auth";
 import { ColiseuLogo } from "@/components/coliseu-logo";
 import { LoginForm } from "@/components/forms/login-form";
 import { isMockMode } from "@/lib/env";
-import { getRoleHomePath } from "@/lib/permissions";
+import { getRoleHomePath, getRoleLabel } from "@/lib/permissions";
 import { getSessionContext } from "@/lib/session";
+import type { AppRole } from "@/lib/types";
 
 interface LoginPageProps {
   searchParams: Promise<{
     error?: string;
   }>;
 }
+
+const demoOptions: Array<{
+  role: AppRole;
+  label: string;
+  description: string;
+}> = [
+  {
+    role: "admin_general",
+    label: "Entrar como Administrador Geral",
+    description:
+      "Acesso completo à Central de Creators, creators, métricas, avisos, tickets e configurações.",
+  },
+  {
+    role: "responsavel_creators",
+    label: "Entrar como Responsável Creators",
+    description:
+      "Gestão de creators, métricas, avisos e tickets da operação Creators Coliseu.",
+  },
+  {
+    role: "creator",
+    label: "Entrar como Creator",
+    description: "Acesso apenas à própria sala, métricas e avisos recebidos.",
+  },
+];
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const actor = await getSessionContext();
@@ -74,9 +99,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <p className="mt-3 text-sm leading-7 text-[var(--muted)]">
             {isMockMode
               ? "Escolha um perfil de demonstração para visualizar os acessos da operação."
-              : "Use seu acesso para entrar na sua sala ou na central da equipe."}
+              : "Use seu acesso para entrar na sua sala ou na Central de Creators."}
           </p>
-          <Link href="/" className="mt-5 inline-flex text-sm font-semibold text-[var(--gold)] hover:text-[var(--white)]">
+          <Link
+            href="/"
+            className="mt-5 inline-flex text-sm font-semibold text-[var(--gold)] hover:text-[var(--white)]"
+          >
             Voltar para o início
           </Link>
         </div>
@@ -89,23 +117,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
         {isMockMode ? (
           <div className="space-y-4">
-            {[
-              {
-                role: "admin_general",
-                label: "Entrar como Admin Geral",
-                description: "Acesso completo a creators, análises, avisos e histórico.",
-              },
-              {
-                role: "responsavel_creators",
-                label: "Entrar como Responsável Creators",
-                description: "Gestão de creators, métricas, avisos e revisões.",
-              },
-              {
-                role: "creator",
-                label: "Entrar como Creator",
-                description: "Acesso à própria sala, métricas e avisos recebidos.",
-              },
-            ].map((option) => (
+            {demoOptions.map((option) => (
               <form
                 key={option.role}
                 action={switchDemoRoleAction}
@@ -118,10 +130,13 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 <p className="mt-2 text-sm leading-6 text-[var(--muted)]">
                   {option.description}
                 </p>
-                <button
-                  type="submit"
-                  className="button-gold mt-5"
-                >
+                <div className="mt-4 rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3 text-sm text-[var(--muted)]">
+                  Perfil:{" "}
+                  <span className="font-semibold text-[var(--white)]">
+                    {getRoleLabel(option.role)}
+                  </span>
+                </div>
+                <button type="submit" className="button-gold mt-5">
                   Entrar na demonstração
                 </button>
               </form>

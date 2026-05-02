@@ -4,7 +4,11 @@ import { TestDiscordButton } from "@/components/forms/test-discord-button";
 import { SectionCard } from "@/components/section-card";
 import { StatusBadge } from "@/components/status-badge";
 import { getDiscordChannelStatusItems } from "@/lib/discord-channels";
-import { getDiscordLogs, getDiscordSettings, getDiscordTicketSnapshot } from "@/lib/data";
+import {
+  getDiscordLogs,
+  getDiscordSettings,
+  getDiscordTicketSnapshot,
+} from "@/lib/data";
 import {
   getServerEnvValue,
   isServerServiceRoleConfigured,
@@ -55,7 +59,6 @@ export default async function DiscordSettingsPage() {
     isDiscordGuildConfigured &&
     isDiscordCitizenRoleConfigured &&
     isDiscordCreatorsCategoryConfigured &&
-    hasStaffRoleIds &&
     Boolean(primaryNoticeChannel?.configured) &&
     Boolean(ticketChannel?.configured);
 
@@ -74,8 +77,13 @@ export default async function DiscordSettingsPage() {
     <div className="space-y-6">
       <SectionCard
         title="Configurações do Discord"
-        description="Acompanhe a estrutura do Creators Coliseu no Discord sem expor informações sensíveis do bot ou da operação."
+        description="Acompanhe como o Creators Coliseu está estruturado no Discord, incluindo avisos, tickets, auto cargo e painel de atendimento."
       >
+        {ticketSnapshot.errorMessage ? (
+          <div className="mb-4 rounded-[24px] border border-[rgba(139,30,30,0.42)] bg-[rgba(139,30,30,0.18)] px-4 py-4 text-sm leading-7 text-[#ffd2d2]">
+            {ticketSnapshot.errorMessage}
+          </div>
+        ) : null}
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
             <div className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
@@ -85,7 +93,8 @@ export default async function DiscordSettingsPage() {
                     Comunicação {isDiscordReady ? "pronta" : "com pendências"}
                   </p>
                   <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                    O bot, os canais e o atendimento dos creators são conferidos aqui antes de qualquer envio ou abertura de ticket.
+                    O bot, os canais, os cargos e a base interna são conferidos aqui
+                    antes de qualquer automação do Discord.
                   </p>
                 </div>
 
@@ -114,7 +123,7 @@ export default async function DiscordSettingsPage() {
                   </p>
                   <div className="mt-2 space-y-1">
                     {missingRequiredChannels.map((channel) => (
-                      <p key={channel.purpose}>• {channel.label}</p>
+                      <p key={channel.purpose}>- {channel.label}</p>
                     ))}
                   </div>
                 </div>
@@ -135,7 +144,19 @@ export default async function DiscordSettingsPage() {
                     Servidor
                   </p>
                   <p className="mt-2 text-sm font-semibold text-[var(--white)]">
-                    {settings?.guild_id || getServerEnvValue("DISCORD_GUILD_ID") || "Aguardando configuração"}
+                    {settings?.guild_id ||
+                      getServerEnvValue("DISCORD_GUILD_ID") ||
+                      "Aguardando configuração"}
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
+                  <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
+                    Cargo Cidadão
+                  </p>
+                  <p className="mt-2 text-sm font-semibold text-[var(--white)]">
+                    {getServerEnvValue("DISCORD_CITIZEN_ROLE_ID") ||
+                      "Aguardando configuração"}
                   </p>
                 </div>
 
@@ -152,19 +173,11 @@ export default async function DiscordSettingsPage() {
 
                 <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
                   <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
-                    Cargo Cidadão
-                  </p>
-                  <p className="mt-2 text-sm font-semibold text-[var(--white)]">
-                    {getServerEnvValue("DISCORD_CITIZEN_ROLE_ID") || "Aguardando configuração"}
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] px-4 py-3">
-                  <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
                     Staff dos tickets
                   </p>
                   <p className="mt-2 text-sm font-semibold text-[var(--white)]">
-                    {getServerEnvValue("DISCORD_STAFF_ROLE_IDS") || "Aguardando configuração"}
+                    {getServerEnvValue("DISCORD_STAFF_ROLE_IDS") ||
+                      "Aguardando configuração"}
                   </p>
                 </div>
 
@@ -210,14 +223,16 @@ export default async function DiscordSettingsPage() {
                 Teste de envio
               </p>
               <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                Envie uma mensagem de teste para o canal de avisos configurado e confirme rapidamente se a integração está pronta.
+                Envie uma mensagem de teste para o canal de avisos configurado e
+                confirme rapidamente se a integração está pronta para uso.
               </p>
               <div className="mt-5 rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(18,10,5,0.38)] px-4 py-4">
                 <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
                   Canal de avisos atual
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--white)]">
-                  {primaryNoticeChannel?.channelId || "Canal de avisos do Discord não configurado."}
+                  {primaryNoticeChannel?.channelId ||
+                    "Canal de avisos do Discord não configurado."}
                 </p>
                 <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
                   A mensagem de teste usa o canal dedicado de avisos do programa.
@@ -230,20 +245,23 @@ export default async function DiscordSettingsPage() {
 
             <div className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">
               <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">
-                Painel de tickets
+                Publicação do painel
               </p>
               <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                Publique ou atualize a mensagem fixa do canal de tickets com o botão de abertura da sala do creator.
+                Publique ou atualize a mensagem do canal de tickets com o botão de
+                abertura da sala creator.
               </p>
               <div className="mt-5 rounded-2xl border border-[rgba(245,197,66,0.12)] bg-[rgba(18,10,5,0.38)] px-4 py-4">
                 <p className="text-xs uppercase tracking-[0.22em] text-[var(--muted)]">
                   Canal de tickets atual
                 </p>
                 <p className="mt-2 text-sm font-semibold text-[var(--white)]">
-                  {ticketChannel?.channelId || "Canal de tickets do Discord não configurado."}
+                  {ticketChannel?.channelId ||
+                    "Canal de tickets do Discord não configurado."}
                 </p>
                 <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                  O painel é atualizado para evitar mensagens duplicadas quando já existir um registro salvo.
+                  Se já existir um painel salvo, a mesma mensagem será atualizada para
+                  evitar duplicidade.
                 </p>
                 <div className="mt-4">
                   <PublishTicketPanelButton />
@@ -259,7 +277,8 @@ export default async function DiscordSettingsPage() {
                   Canais por finalidade
                 </p>
                 <p className="mt-2 text-sm leading-7 text-[var(--muted)]">
-                  Cada bloco mostra o canal esperado para uma finalidade específica do programa Creators Coliseu.
+                  Cada bloco mostra o canal esperado para uma finalidade específica do
+                  programa Creators Coliseu.
                 </p>
               </div>
               <StatusBadge

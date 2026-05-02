@@ -12,6 +12,7 @@ import type {
   Creator,
   CreatorApplication,
   CreatorNotice,
+  CreatorTicketType,
   DiscordTicketSnapshot,
   DashboardSnapshot,
   DiscordMessageLog,
@@ -30,6 +31,20 @@ type ServiceSupabaseClient = NonNullable<
   ReturnType<typeof createSupabaseServiceRoleClient>
 >;
 type SupabaseReader = ServerSupabaseClient | ServiceSupabaseClient;
+
+function createEmptyDiscordTicketSnapshot(
+  errorMessage?: string | null,
+): DiscordTicketSnapshot {
+  return {
+    openCount: 0,
+    closedCount: 0,
+    archivedCount: 0,
+    totalCount: 0,
+    recentTickets: [],
+    panel: null,
+    errorMessage: errorMessage ?? null,
+  };
+}
 
 function filterMockNotices(actor: SessionContext, notices: CreatorNotice[]) {
   if (actor.isAdmin || actor.canManageCreators) {
@@ -348,36 +363,38 @@ export async function getDiscordSettings(
 
 export async function getDiscordTicketSnapshot(
   actor: SessionContext,
+  options?: {
+    ticketType?: CreatorTicketType | null;
+  },
 ): Promise<DiscordTicketSnapshot> {
   if (!actor.canManageCreators) {
-    return {
-      openCount: 0,
-      closedCount: 0,
-      archivedCount: 0,
-      totalCount: 0,
-      recentTickets: [],
-      panel: null,
-    };
+    return createEmptyDiscordTicketSnapshot();
   }
 
   if (actor.mockMode) {
-    return getDiscordTicketSnapshotFromStore(null);
+    return getDiscordTicketSnapshotFromStore(null, {
+      ticketType: options?.ticketType ?? null,
+    });
   }
 
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    return {
-      openCount: 0,
-      closedCount: 0,
-      archivedCount: 0,
-      totalCount: 0,
-      recentTickets: [],
-      panel: null,
-    };
+    return createEmptyDiscordTicketSnapshot();
   }
 
-  return getDiscordTicketSnapshotFromStore(supabase);
+  try {
+    return await getDiscordTicketSnapshotFromStore(supabase, {
+      fallbackToMemory: false,
+      ticketType: options?.ticketType ?? null,
+    });
+  } catch (error) {
+    console.error("[discord-tickets] Falha ao carregar tickets.", error);
+
+    return createEmptyDiscordTicketSnapshot(
+      "Não foi possível carregar os tickets no momento.",
+    );
+  }
 }
 
 export async function getMetrics(actor: SessionContext): Promise<MetricSubmission[]> {

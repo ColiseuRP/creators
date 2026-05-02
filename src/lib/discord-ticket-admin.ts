@@ -1,8 +1,11 @@
 import "server-only";
 
-import { getDiscordChannelIdForPurpose, getDiscordMissingChannelMessage } from "@/lib/discord-channels";
-import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
+import {
+  getDiscordChannelIdForPurpose,
+  getDiscordMissingChannelMessage,
+} from "@/lib/discord-channels";
 import { getServerEnvValue } from "@/lib/server-env";
+import { createSupabaseServiceRoleClient } from "@/lib/supabase/server";
 import {
   createDiscordBotLogRecord,
   getDiscordPanelByType,
@@ -21,13 +24,13 @@ interface TicketPanelPublishResult {
   error: string | null;
 }
 
-function buildDiscordPanelFailureMessage(status: number, rawBody: string) {
+function parseDiscordPanelFailure(status: number, rawBody: string) {
   let detailMessage: string | null = null;
-  let detailCode: number | string | null = null;
+  let detailCode: string | number | null = null;
 
   if (rawBody) {
     try {
-      const payload = JSON.parse(rawBody) as { message?: string; code?: number | string };
+      const payload = JSON.parse(rawBody) as { message?: string; code?: string | number };
       detailMessage = payload.message ?? null;
       detailCode = payload.code ?? null;
     } catch {
@@ -35,7 +38,7 @@ function buildDiscordPanelFailureMessage(status: number, rawBody: string) {
     }
   }
 
-  const detailSuffix =
+  const suffix =
     detailMessage || detailCode
       ? ` (${[detailMessage, detailCode ? `código ${detailCode}` : null]
           .filter(Boolean)
@@ -43,22 +46,22 @@ function buildDiscordPanelFailureMessage(status: number, rawBody: string) {
       : "";
 
   if (status === 401) {
-    return `Token do Discord não configurado ou inválido.${detailSuffix}`;
+    return `Token do Discord não configurado ou inválido.${suffix}`;
   }
 
   if (status === 403) {
-    return `O bot não tem permissão para publicar o painel neste canal.${detailSuffix}`;
+    return `O bot não tem permissão para publicar o painel neste canal.${suffix}`;
   }
 
   if (status === 404) {
-    return `Canal de tickets não encontrado no servidor.${detailSuffix}`;
+    return `Canal de tickets não encontrado no servidor.${suffix}`;
   }
 
   if (status >= 500) {
-    return `Não foi possível conectar ao Discord. Tente novamente.${detailSuffix}`;
+    return `Não foi possível conectar ao Discord. Tente novamente.${suffix}`;
   }
 
-  return `O Discord recusou a publicação do painel.${detailSuffix}`;
+  return `O Discord recusou a publicação do painel.${suffix}`;
 }
 
 async function requestDiscordPanelMessage(input: {
@@ -66,7 +69,6 @@ async function requestDiscordPanelMessage(input: {
   channelId: string;
   messageId?: string | null;
 }) {
-  const body = buildTicketPanelPayload();
   const endpoint = input.messageId
     ? `https://discord.com/api/v10/channels/${input.channelId}/messages/${input.messageId}`
     : `https://discord.com/api/v10/channels/${input.channelId}/messages`;
@@ -78,16 +80,36 @@ async function requestDiscordPanelMessage(input: {
       Authorization: `Bot ${input.token}`,
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify(buildTicketPanelPayload()),
   });
 
   if (!response.ok) {
     const rawBody = await response.text();
-    throw new Error(buildDiscordPanelFailureMessage(response.status, rawBody));
+    throw new Error(parseDiscordPanelFailure(response.status, rawBody));
   }
 
   const payload = (await response.json()) as { id?: string };
   return payload.id ?? null;
+}
+
+async function registerPanelLog(input: {
+  type: "ticket_panel_published" | "ticket_panel_failed";
+  channelId?: string | null;
+  status: "success" | "failed";
+  message: string;
+  errorMessage?: string | null;
+}) {
+  try {
+    await createDiscordBotLogRecord(createSupabaseServiceRoleClient(), {
+      type: input.type,
+      channelId: input.channelId ?? null,
+      status: input.status,
+      message: input.message,
+      errorMessage: input.errorMessage ?? null,
+    });
+  } catch (error) {
+    console.error("[discord-ticket-admin] Falha ao registrar log do painel.", error);
+  }
 }
 
 export async function publishCreatorTicketPanel(): Promise<TicketPanelPublishResult> {
@@ -96,22 +118,40 @@ export async function publishCreatorTicketPanel(): Promise<TicketPanelPublishRes
   const channelId = getDiscordChannelIdForPurpose("ticket");
 
   if (!channelId) {
+    const error = getDiscordMissingChannelMessage("ticket");
+    await registerPanelLog({
+      type: "ticket_panel_failed",
+      channelId: null,
+      status: "failed",
+      message: "Falha ao publicar o painel de tickets.",
+      errorMessage: error,
+    });
+
     return {
       success: false,
-      message: "Não foi possível publicar o painel de tickets.",
+      message: "Não foi possível publicar o painel de tickets. Verifique as permissões do bot.",
       channelId: null,
       messageId: null,
-      error: getDiscordMissingChannelMessage("ticket"),
+      error,
     };
   }
 
   if (!discordBotToken) {
+    const error = "Token do Discord não configurado.";
+    await registerPanelLog({
+      type: "ticket_panel_failed",
+      channelId,
+      status: "failed",
+      message: "Falha ao publicar o painel de tickets.",
+      errorMessage: error,
+    });
+
     return {
       success: false,
-      message: "Não foi possível publicar o painel de tickets.",
+      message: "Não foi possível publicar o painel de tickets. Verifique as permissões do bot.",
       channelId,
       messageId: null,
-      error: "Token do Discord não configurado.",
+      error,
     };
   }
 
@@ -146,7 +186,7 @@ export async function publishCreatorTicketPanel(): Promise<TicketPanelPublishRes
       messageId,
     });
 
-    await createDiscordBotLogRecord(serviceClient, {
+    await registerPanelLog({
       type: "ticket_panel_published",
       channelId,
       status: "success",
@@ -166,21 +206,17 @@ export async function publishCreatorTicketPanel(): Promise<TicketPanelPublishRes
         ? error.message
         : "Não foi possível publicar o painel de tickets.";
 
-    try {
-      await createDiscordBotLogRecord(serviceClient, {
-        type: "ticket_panel_published",
-        channelId,
-        status: "failed",
-        message: "Falha ao publicar o painel de tickets.",
-        errorMessage,
-      });
-    } catch (logError) {
-      console.error("[discord-ticket-admin] Falha ao salvar log do painel.", logError);
-    }
+    await registerPanelLog({
+      type: "ticket_panel_failed",
+      channelId,
+      status: "failed",
+      message: "Falha ao publicar o painel de tickets.",
+      errorMessage,
+    });
 
     return {
       success: false,
-      message: "Não foi possível publicar o painel de tickets.",
+      message: "Não foi possível publicar o painel de tickets. Verifique as permissões do bot.",
       channelId,
       messageId: null,
       error: errorMessage,

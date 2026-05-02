@@ -5,6 +5,7 @@ export type MetricStatus = "pending" | "approved" | "rejected";
 export type NoticeType = "info" | "success" | "warning";
 export type NoticeTargetType = "individual" | "general" | "category";
 export type DiscordLogStatus = "pending" | "sent" | "failed" | "skipped";
+export type CreatorTicketType = "streamer" | "influencer";
 export type CreatorTicketStatus = "open" | "closed" | "archived";
 export type DiscordPanelType = "creator_ticket_panel";
 
@@ -160,6 +161,7 @@ export interface CreatorTicket {
   discord_user_id: string;
   discord_username: string;
   channel_id: string;
+  ticket_type: CreatorTicketType | null;
   status: CreatorTicketStatus;
   created_at: string;
   closed_at: string | null;
@@ -180,7 +182,9 @@ export interface DiscordBotLog {
   id: string;
   type: string;
   discord_user_id: string | null;
+  discord_username: string | null;
   channel_id: string | null;
+  ticket_type: CreatorTicketType | null;
   status: "success" | "failed" | "info";
   message: string;
   error_message: string | null;
@@ -194,6 +198,7 @@ export interface DiscordTicketSnapshot {
   totalCount: number;
   recentTickets: CreatorTicket[];
   panel: DiscordPanel | null;
+  errorMessage?: string | null;
 }
 
 export interface SessionUser {
