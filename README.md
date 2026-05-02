@@ -74,6 +74,7 @@ No `SQL Editor` do Supabase, execute os arquivos nesta ordem:
 2. `supabase/migrations/202605011020_discord_log_pending_enum.sql`
 3. `supabase/migrations/202605011030_notice_discord_delivery.sql`
 4. `supabase/migrations/202605011130_discord_bot_tickets.sql`
+5. `supabase/migrations/202605011340_bootstrap_discord_bot_tables.sql`
 
 As migrations cobrem:
 
@@ -92,6 +93,8 @@ As migrations cobrem:
 - `creator_tickets`
 - `discord_panels`
 - `discord_bot_logs`
+
+Se a produção estiver mostrando erros como `Could not find the table 'public.creator_tickets' in the schema cache`, aplique também `202605011340_bootstrap_discord_bot_tables.sql` no Supabase para criar as tabelas ausentes e atualizar a estrutura esperada pelo site.
 
 Também cria:
 

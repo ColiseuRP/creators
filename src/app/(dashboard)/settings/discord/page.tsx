@@ -79,6 +79,11 @@ export default async function DiscordSettingsPage() {
         title="Configurações do Discord"
         description="Acompanhe como o Creators Coliseu está estruturado no Discord, incluindo avisos, tickets, auto cargo e painel de atendimento."
       >
+        {ticketSnapshot.errorMessage ? (
+          <div className="mb-4 rounded-[24px] border border-[rgba(139,30,30,0.42)] bg-[rgba(139,30,30,0.18)] px-4 py-4 text-sm leading-7 text-[#ffd2d2]">
+            {ticketSnapshot.errorMessage}
+          </div>
+        ) : null}
         <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-4">
             <div className="rounded-[28px] border border-[rgba(245,197,66,0.12)] bg-[rgba(255,255,255,0.03)] p-5">

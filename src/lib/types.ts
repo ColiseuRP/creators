@@ -194,6 +194,7 @@ export interface DiscordTicketSnapshot {
   totalCount: number;
   recentTickets: CreatorTicket[];
   panel: DiscordPanel | null;
+  errorMessage?: string | null;
 }
 
 export interface SessionUser {

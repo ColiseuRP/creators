@@ -90,6 +90,12 @@ export default async function CentralCreatorsPage() {
           </div>
         </div>
 
+        {ticketSnapshot.errorMessage ? (
+          <div className="mt-4 rounded-[24px] border border-[rgba(139,30,30,0.42)] bg-[rgba(139,30,30,0.18)] px-4 py-4 text-sm leading-7 text-[#ffd2d2]">
+            {ticketSnapshot.errorMessage}
+          </div>
+        ) : null}
+
         <div className="mt-6 space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="font-display text-2xl font-semibold tracking-tight text-[var(--white)]">

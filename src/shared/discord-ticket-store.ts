@@ -11,6 +11,10 @@ import type {
 
 type DatabaseClient = SupabaseClient | null;
 
+interface StoreReadOptions {
+  fallbackToMemory?: boolean;
+}
+
 interface CreateCreatorTicketInput {
   discordUserId: string;
   discordUsername: string;
@@ -92,11 +96,23 @@ const memoryState: {
   ],
 };
 
-function isMissingTableError(error: { code?: string | null; message?: string | null } | null) {
+function isMissingTableError(
+  error: {
+    code?: string | null;
+    message?: string | null;
+    details?: string | null;
+    hint?: string | null;
+  } | null,
+) {
   return (
     error?.code === "42P01" ||
+    error?.code === "PGRST205" ||
     error?.message?.includes("relation") ||
+    error?.message?.includes("Could not find the table") ||
+    error?.message?.includes("schema cache") ||
     error?.message?.includes("does not exist") ||
+    error?.details?.includes("schema cache") ||
+    error?.hint?.includes("schema cache") ||
     false
   );
 }
@@ -109,7 +125,13 @@ function createMemoryId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export async function listCreatorTickets(client: DatabaseClient, limit?: number) {
+export async function listCreatorTickets(
+  client: DatabaseClient,
+  limit?: number,
+  options?: StoreReadOptions,
+) {
+  const fallbackToMemory = options?.fallbackToMemory ?? true;
+
   if (!client) {
     const tickets = [...memoryState.tickets].sort((a, b) =>
       b.created_at.localeCompare(a.created_at),
@@ -130,7 +152,11 @@ export async function listCreatorTickets(client: DatabaseClient, limit?: number)
 
   if (error) {
     if (isMissingTableError(error)) {
-      return listCreatorTickets(null, limit);
+      if (fallbackToMemory) {
+        return listCreatorTickets(null, limit, options);
+      }
+
+      throw new Error(error.message);
     }
 
     throw new Error(error.message);
@@ -141,9 +167,10 @@ export async function listCreatorTickets(client: DatabaseClient, limit?: number)
 
 export async function getCreatorTicketSnapshot(
   client: DatabaseClient,
+  options?: StoreReadOptions,
 ): Promise<DiscordTicketSnapshot> {
-  const tickets = await listCreatorTickets(client);
-  const panel = await getDiscordPanelByType(client, "creator_ticket_panel");
+  const tickets = await listCreatorTickets(client, undefined, options);
+  const panel = await getDiscordPanelByType(client, "creator_ticket_panel", options);
 
   return {
     openCount: tickets.filter((ticket) => ticket.status === "open").length,
@@ -295,7 +322,10 @@ export async function closeCreatorTicketRecord(
 export async function getDiscordPanelByType(
   client: DatabaseClient,
   type: DiscordPanelType,
+  options?: StoreReadOptions,
 ) {
+  const fallbackToMemory = options?.fallbackToMemory ?? true;
+
   if (!client) {
     return memoryState.panels.find((panel) => panel.type === type) ?? null;
   }
@@ -308,7 +338,11 @@ export async function getDiscordPanelByType(
 
   if (error) {
     if (isMissingTableError(error)) {
-      return getDiscordPanelByType(null, type);
+      if (fallbackToMemory) {
+        return getDiscordPanelByType(null, type, options);
+      }
+
+      throw new Error(error.message);
     }
 
     throw new Error(error.message);

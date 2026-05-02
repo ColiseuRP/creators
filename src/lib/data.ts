@@ -31,6 +31,20 @@ type ServiceSupabaseClient = NonNullable<
 >;
 type SupabaseReader = ServerSupabaseClient | ServiceSupabaseClient;
 
+function createEmptyDiscordTicketSnapshot(
+  errorMessage?: string | null,
+): DiscordTicketSnapshot {
+  return {
+    openCount: 0,
+    closedCount: 0,
+    archivedCount: 0,
+    totalCount: 0,
+    recentTickets: [],
+    panel: null,
+    errorMessage: errorMessage ?? null,
+  };
+}
+
 function filterMockNotices(actor: SessionContext, notices: CreatorNotice[]) {
   if (actor.isAdmin || actor.canManageCreators) {
     return notices;
@@ -350,14 +364,7 @@ export async function getDiscordTicketSnapshot(
   actor: SessionContext,
 ): Promise<DiscordTicketSnapshot> {
   if (!actor.canManageCreators) {
-    return {
-      openCount: 0,
-      closedCount: 0,
-      archivedCount: 0,
-      totalCount: 0,
-      recentTickets: [],
-      panel: null,
-    };
+    return createEmptyDiscordTicketSnapshot();
   }
 
   if (actor.mockMode) {
@@ -367,17 +374,20 @@ export async function getDiscordTicketSnapshot(
   const supabase = await createSupabaseServerClient();
 
   if (!supabase) {
-    return {
-      openCount: 0,
-      closedCount: 0,
-      archivedCount: 0,
-      totalCount: 0,
-      recentTickets: [],
-      panel: null,
-    };
+    return createEmptyDiscordTicketSnapshot();
   }
 
-  return getDiscordTicketSnapshotFromStore(supabase);
+  try {
+    return await getDiscordTicketSnapshotFromStore(supabase, {
+      fallbackToMemory: false,
+    });
+  } catch (error) {
+    console.error("[discord-tickets] Falha ao carregar tickets.", error);
+
+    return createEmptyDiscordTicketSnapshot(
+      "Não foi possível carregar os tickets no momento.",
+    );
+  }
 }
 
 export async function getMetrics(actor: SessionContext): Promise<MetricSubmission[]> {
