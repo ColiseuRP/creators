@@ -197,6 +197,10 @@ async function addApprovedRoleToMember(
     throw new Error("Servidor do Discord não encontrado para adicionar o cargo.");
   }
 
+  if (!context.config.approvedCreatorRoleId) {
+    throw new Error("Cargo de creator aprovado não configurado.");
+  }
+
   const member = await interaction.guild.members.fetch(discordUserId);
   await member.roles.add(context.config.approvedCreatorRoleId);
 }

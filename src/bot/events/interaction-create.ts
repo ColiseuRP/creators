@@ -28,7 +28,9 @@ import {
   resolveCreatorApplicationRejectId,
   resolveCreatorApplicationRejectModalId,
 } from "../interactions/creator-application";
+import { avisarCreatorsCommand } from "../commands/avisar-creators";
 import { setupTicketsCommand } from "../commands/setup-tickets";
+import { handleAvisarCreatorsCommand } from "../interactions/avisar-creators";
 import {
   handleCreatorTicketClose,
   handleCreatorTicketCloseModalSubmit,
@@ -75,6 +77,11 @@ export function registerInteractionCreateEvent(context: BotContext) {
               : `${result.message} ${result.errorMessage ?? ""}`.trim(),
           ephemeral: true,
         });
+        return;
+      }
+
+      if (interaction.commandName === avisarCreatorsCommand.name) {
+        await handleAvisarCreatorsCommand(context, interaction);
       }
 
       return;

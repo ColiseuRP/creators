@@ -5,13 +5,13 @@ export interface BotConfig {
   token: string;
   guildId: string;
   citizenRoleId: string;
+  approvedCreatorRoleId: string;
   ticketChannelId: string;
   creatorFormChannelId: string;
   creatorFormSubmissionsChannelId: string;
   creatorsCategoryId: string;
   noticesChannelId: string;
   generalCreatorsChannelId: string;
-  approvedCreatorRoleId: string;
   responsavelStaffRoleId: string;
   responsavelCreatorsRoleId: string | null;
   staffRoleIds: string[];

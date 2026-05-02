@@ -65,7 +65,7 @@ Regras importantes:
 - `DISCORD_STAFF_ROLE_IDS` aceita múltiplos IDs separados por vírgula.
 - `DISCORD_CREATOR_FORM_CHANNEL_ID` define o canal onde o bot publica o painel oficial do formulário.
 - `DISCORD_CREATOR_FORM_SUBMISSIONS_CHANNEL_ID` define o canal onde a equipe recebe as inscrições vindas do Discord.
-- `DISCORD_APPROVED_CREATOR_ROLE_ID` é o cargo entregue automaticamente quando a inscrição é aprovada.
+- `DISCORD_APPROVED_CREATOR_ROLE_ID` é o cargo entregue automaticamente quando a inscrição é aprovada e também o cargo usado no aviso em massa dos creators aprovados.
 - `DISCORD_ARCHIVED_TICKETS_CATEGORY_ID` é opcional. Se não estiver preenchida, tickets fechados são removidos em vez de arquivados.
 - Se `DISCORD_GENERAL_CREATORS_CHANNEL_ID` não estiver configurado, o sistema usa `DISCORD_NOTICES_CHANNEL_ID` como fallback de compatibilidade.
 
@@ -235,6 +235,7 @@ npm run bot:deploy-commands
 Esse script registra os comandos da guild configurada no Discord, incluindo:
 
 - `setup-tickets`
+- `avisar-creators`
 
 ## Funcionalidades do bot
 
@@ -319,7 +320,32 @@ Logs previstos:
 - `ticket_closed`
 - `ticket_close_failed`
 
-### 3. Publicação do painel
+### 3. Aviso em massa para creators aprovados
+
+O comando slash `/avisar-creators` envia uma mensagem privada para todos os membros que possuem o cargo `DISCORD_APPROVED_CREATOR_ROLE_ID`.
+
+Fluxo:
+
+- apenas administradores e cargos liberados pela staff podem usar
+- o bot confirma o início do envio por resposta ephemeral
+- o bot procura membros com o cargo de creator aprovado
+- envia a DM individualmente com pequeno intervalo entre os envios
+- continua mesmo que um usuário esteja com o privado bloqueado
+- responde com um resumo final de enviados, falhas e total encontrado
+
+Logs previstos:
+
+- `creators_dm_broadcast_started`
+- `creators_dm_sent`
+- `creators_dm_failed`
+- `creators_dm_broadcast_finished`
+
+Depois de adicionar ou atualizar esse comando:
+
+- rode `npm run bot:deploy-commands`
+- reinicie o bot no Railway
+
+### 4. Publicação do painel
 
 O projeto já possui rota segura para o painel administrativo:
 
@@ -335,7 +361,7 @@ O painel administrativo também já possui o botão:
 
 - `Publicar painel de tickets`
 
-### 4. Formulário oficial de inscrições
+### 5. Formulário oficial de inscrições
 
 O bot também pode publicar o painel do formulário no canal `DISCORD_CREATOR_FORM_CHANNEL_ID`.
 
