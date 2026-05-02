@@ -1,0 +1,16 @@
+
+> creators-hub@0.1.0 bot:start
+> tsx src/bot/index.ts
+
+[discord-bot] Bot Creators Coliseu online como Creators Coliseu#8236
+[discord-bot] Auto cargo Cidadão ativado.
+[discord-bot] Sistema de tickets carregado.
+[discord-bot] Painel de tickets pronto para publicação.
+[discord-bot] Canal geral dos creators não configurado separadamente. O canal de avisos será usado como compatibilidade.
+[discord-bot] Comandos preparados para futura expansão: setup-tickets
+[discord-bot] Ticket criado para kaiosnow._..
+[discord-bot] Ticket de kaiosnow._. fechado com sucesso.
+[discord-bot] Ticket criado para kaiosnow._..
+[discord-bot] Ticket de kaiosnow._. fechado com sucesso.
+[discord-bot] Ticket criado para kaiosnow._..
+[discord-bot] Ticket de kaiosnow._. fechado com sucesso.
